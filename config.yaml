@@ -1,0 +1,6 @@
+raptor:
+  host: 'localhost'
+  port: 6380
+  max_connection: 5000
+  auth: 'mypass'
+  directory: data
