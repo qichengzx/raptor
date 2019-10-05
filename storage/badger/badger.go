@@ -55,3 +55,12 @@ func (db *BadgerDB) Get(key []byte) ([]byte, error) {
 
 	return data, err
 }
+
+func (db *BadgerDB) Del(key [][]byte) error {
+	return db.storage.Update(func(txn *badger.Txn) error {
+		for _, k := range key {
+			txn.Delete(k)
+		}
+		return nil
+	})
+}

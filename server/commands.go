@@ -19,5 +19,8 @@ var (
 		//STRING
 		cmdSet: setCommandFunc,
 		cmdGet: getCommandFunc,
+
+		//DATABASE
+		cmdDel: delCommandFunc,
 	}
 )

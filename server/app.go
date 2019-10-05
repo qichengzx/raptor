@@ -99,6 +99,7 @@ func (app *App) onAccept() func(conn redcon.Conn) bool {
 func (app *App) onClose() func(conn redcon.Conn, err error) {
 	return func(conn redcon.Conn, err error) {
 		log.Printf("closed: %s, err: %v", conn.RemoteAddr(), err)
+		app.infoClients.connections--
 	}
 }
 
