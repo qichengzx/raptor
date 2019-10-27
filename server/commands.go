@@ -17,8 +17,9 @@ type Context struct {
 var (
 	commands = map[string]CommandHandler{
 		//STRING
-		cmdSet: setCommandFunc,
-		cmdGet: getCommandFunc,
+		cmdSet:    setCommandFunc,
+		cmdGet:    getCommandFunc,
+		cmdStrlen: strlenCommandFunc,
 
 		//DATABASE
 		cmdDel:    delCommandFunc,

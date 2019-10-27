@@ -6,6 +6,7 @@ type DB interface {
 	//string
 	Set(key, value []byte) error
 	Get(key []byte) ([]byte, error)
+	Strlen(key []byte) (int64, error)
 
 	//database
 	Del(key [][]byte) error

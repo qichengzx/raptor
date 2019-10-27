@@ -56,6 +56,21 @@ func (db *BadgerDB) Get(key []byte) ([]byte, error) {
 	return data, err
 }
 
+func (db *BadgerDB) Strlen(key []byte) (int64, error) {
+	var length int64
+	err := db.storage.View(func(txn *badger.Txn) error {
+		item, err := txn.Get(key)
+		if err != nil {
+			return err
+		}
+
+		length = item.ValueSize()
+		return nil
+	})
+
+	return length, err
+}
+
 func (db *BadgerDB) Del(key [][]byte) error {
 	return db.storage.Update(func(txn *badger.Txn) error {
 		for _, k := range key {

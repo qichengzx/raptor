@@ -1,8 +1,9 @@
 package server
 
 const (
-	cmdSet = "set"
-	cmdGet = "get"
+	cmdSet    = "set"
+	cmdGet    = "get"
+	cmdStrlen = "strlen"
 )
 
 func setCommandFunc(ctx Context) {
@@ -29,5 +30,19 @@ func getCommandFunc(ctx Context) {
 		ctx.Conn.WriteNull()
 	} else {
 		ctx.Conn.WriteBulk(val)
+	}
+}
+
+func strlenCommandFunc(ctx Context) {
+	if len(ctx.args) != 2 {
+		ctx.Conn.WriteError("ERR wrong number of arguments for '" + string(ctx.args[0]) + "' command")
+		return
+	}
+
+	val, ok := ctx.db.Get(ctx.args[1])
+	if ok != nil {
+		ctx.Conn.WriteInt(0)
+	} else {
+		ctx.Conn.WriteInt(len(string(val)))
 	}
 }
