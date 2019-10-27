@@ -64,3 +64,14 @@ func (db *BadgerDB) Del(key [][]byte) error {
 		return nil
 	})
 }
+
+func (db *BadgerDB) Exists(key []byte) error {
+	return db.storage.View(func(txn *badger.Txn) error {
+		_, err := txn.Get(key)
+		if err != nil {
+			return err
+		}
+
+		return nil
+	})
+}

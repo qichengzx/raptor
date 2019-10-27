@@ -35,7 +35,7 @@ func New(conf *config.Config) *App {
 
 func (app *App) Run() {
 	addr := fmt.Sprintf("%s:%d", app.conf.Raptor.Host, app.conf.Raptor.Port)
-	go log.Printf("started server at :%d", app.conf.Raptor.Port)
+	log.Printf("started server at :%d", app.conf.Raptor.Port)
 	err := redcon.ListenAndServe(addr,
 		app.onCommand(),
 		app.onAccept(),
@@ -64,11 +64,11 @@ func (app *App) onCommand() func(conn redcon.Conn, cmd redcon.Command) {
 			if app.auth(string(cmd.Args[1])) {
 				conn.WriteString(RespOK)
 			} else {
-				conn.WriteError("ERR invalid password")
+				conn.WriteError(ErrPassword)
 			}
 		default:
 			if !app.authed {
-				conn.WriteError("NOAUTH Authentication required.")
+				conn.WriteError(ErrNoAuth)
 				return
 			}
 			f, ok := commands[todo]

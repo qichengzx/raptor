@@ -21,6 +21,7 @@ var (
 		cmdGet: getCommandFunc,
 
 		//DATABASE
-		cmdDel: delCommandFunc,
+		cmdDel:    delCommandFunc,
+		cmdExists: existsCommandFunc,
 	}
 )

@@ -9,4 +9,5 @@ type DB interface {
 
 	//database
 	Del(key [][]byte) error
+	Exists(key []byte) error
 }
