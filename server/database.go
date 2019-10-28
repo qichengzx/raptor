@@ -1,5 +1,7 @@
 package server
 
+import "fmt"
+
 const (
 	cmdDel    = "del"
 	cmdExists = "exists"
@@ -7,7 +9,7 @@ const (
 
 func delCommandFunc(ctx Context) {
 	if len(ctx.args) < 2 {
-		ctx.Conn.WriteError("ERR wrong number of arguments for '" + string(ctx.args[0]) + "' command")
+		ctx.Conn.WriteError(fmt.Sprintf(ErrWrongArgs, string(ctx.args[0])))
 		return
 	}
 
@@ -21,7 +23,7 @@ func delCommandFunc(ctx Context) {
 
 func existsCommandFunc(ctx Context) {
 	if len(ctx.args) != 2 {
-		ctx.Conn.WriteError("ERR wrong number of arguments for '" + string(ctx.args[0]) + "' command")
+		ctx.Conn.WriteError(fmt.Sprintf(ErrWrongArgs, string(ctx.args[0])))
 		return
 	}
 

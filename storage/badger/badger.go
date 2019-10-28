@@ -3,6 +3,7 @@ package badger
 import (
 	"github.com/dgraph-io/badger"
 	"github.com/qichengzx/raptor/config"
+	"strconv"
 )
 
 type BadgerDB struct {
@@ -69,6 +70,31 @@ func (db *BadgerDB) Strlen(key []byte) (int64, error) {
 	})
 
 	return length, err
+}
+
+func (db *BadgerDB) Incr(key []byte) (int64, error) {
+	return db.IncrBy(key, 1)
+}
+
+func (db *BadgerDB) IncrBy(key []byte, by int64) (int64, error) {
+	val, err := db.Get(key)
+	if err != nil {
+		val = []byte("0")
+	}
+
+	valInt, err := strconv.ParseInt(string(val), 10, 64)
+	if err != nil {
+		return 0, err
+	}
+	valInt += by
+
+	valStr := strconv.FormatInt(valInt, 10)
+	err = db.Set(key, []byte(valStr))
+	if err != nil {
+		return 0, err
+	}
+
+	return valInt, nil
 }
 
 func (db *BadgerDB) Del(key [][]byte) error {

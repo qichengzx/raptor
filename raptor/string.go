@@ -21,3 +21,11 @@ func (r *Raptor) Strlen(key []byte) (int64, error) {
 
 	return r.db.Strlen(key)
 }
+
+func (r *Raptor) Incr(key []byte) (int64, error) {
+	return r.db.Incr(key)
+}
+
+func (r *Raptor) IncrBy(key []byte, by int64) (int64, error) {
+	return r.db.IncrBy(key, by)
+}

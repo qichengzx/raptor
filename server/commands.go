@@ -20,6 +20,8 @@ var (
 		cmdSet:    setCommandFunc,
 		cmdGet:    getCommandFunc,
 		cmdStrlen: strlenCommandFunc,
+		cmdIncr:   incrCommandFunc,
+		cmdIncrBy: incrByCommandFunc,
 
 		//DATABASE
 		cmdDel:    delCommandFunc,
