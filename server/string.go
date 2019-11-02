@@ -11,6 +11,8 @@ const (
 	cmdStrlen = "strlen"
 	cmdIncr   = "incr"
 	cmdIncrBy = "incrby"
+	cmdDecr   = "decr"
+	cmdDecrBy = "decrby"
 )
 
 func setCommandFunc(ctx Context) {
@@ -80,6 +82,39 @@ func incrByCommandFunc(ctx Context) {
 	}
 
 	val, err := ctx.db.IncrBy(ctx.args[1], by)
+	if err != nil {
+		ctx.Conn.WriteError(err.Error())
+		return
+	}
+	ctx.Conn.WriteInt64(val)
+}
+
+func decrCommandFunc(ctx Context) {
+	if len(ctx.args) != 2 {
+		ctx.Conn.WriteError(fmt.Sprintf(ErrWrongArgs, string(ctx.args[0])))
+		return
+	}
+	val, err := ctx.db.Decr(ctx.args[1])
+	if err != nil {
+		ctx.Conn.WriteError(err.Error())
+		return
+	}
+	ctx.Conn.WriteInt64(val)
+}
+
+func decrByCommandFunc(ctx Context) {
+	if len(ctx.args) != 3 {
+		ctx.Conn.WriteError(fmt.Sprintf(ErrWrongArgs, string(ctx.args[0])))
+		return
+	}
+
+	by, err := strconv.ParseInt(string(ctx.args[2]), 10, 64)
+	if err != nil {
+		ctx.Conn.WriteError("ERR value is not an integer or out of range")
+		return
+	}
+
+	val, err := ctx.db.DecrBy(ctx.args[1], by)
 	if err != nil {
 		ctx.Conn.WriteError(err.Error())
 		return

@@ -29,3 +29,11 @@ func (r *Raptor) Incr(key []byte) (int64, error) {
 func (r *Raptor) IncrBy(key []byte, by int64) (int64, error) {
 	return r.db.IncrBy(key, by)
 }
+
+func (r *Raptor) Decr(key []byte) (int64, error) {
+	return r.db.Decr(key)
+}
+
+func (r *Raptor) DecrBy(key []byte, by int64) (int64, error) {
+	return r.db.DecrBy(key, by)
+}

@@ -9,6 +9,8 @@ type DB interface {
 	Strlen(key []byte) (int64, error)
 	Incr(key []byte) (int64, error)
 	IncrBy(key []byte, by int64) (int64, error)
+	Decr(key []byte) (int64, error)
+	DecrBy(key []byte, by int64) (int64, error)
 
 	//database
 	Del(key [][]byte) error
