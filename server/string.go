@@ -22,7 +22,7 @@ func setCommandFunc(ctx Context) {
 	}
 	err := ctx.db.Set(ctx.args[1], ctx.args[2])
 	if err != nil {
-		ctx.Conn.WriteError("")
+		ctx.Conn.WriteNull()
 	} else {
 		ctx.Conn.WriteString(RespOK)
 	}
