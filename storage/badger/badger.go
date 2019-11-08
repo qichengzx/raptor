@@ -38,6 +38,16 @@ func (db *BadgerDB) Set(key, value []byte) error {
 	})
 }
 
+func (db *BadgerDB) SetNX(key, value []byte) (bool, error) {
+	_, err := db.Get(key)
+	if err == badger.ErrKeyNotFound {
+		err = db.Set(key, value)
+		return true, err
+	}
+
+	return false, nil
+}
+
 func (db *BadgerDB) Get(key []byte) ([]byte, error) {
 	var data []byte
 	err := db.storage.View(func(txn *badger.Txn) error {

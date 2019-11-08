@@ -18,6 +18,7 @@ var (
 	commands = map[string]CommandHandler{
 		//STRING
 		cmdSet:    setCommandFunc,
+		cmdSetNX:  setnxCommandFunc,
 		cmdGet:    getCommandFunc,
 		cmdStrlen: strlenCommandFunc,
 		cmdIncr:   incrCommandFunc,

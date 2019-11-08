@@ -7,6 +7,7 @@ import (
 
 const (
 	cmdSet    = "set"
+	cmdSetNX  = "setnx"
 	cmdGet    = "get"
 	cmdStrlen = "strlen"
 	cmdIncr   = "incr"
@@ -26,6 +27,19 @@ func setCommandFunc(ctx Context) {
 		ctx.Conn.WriteNull()
 	} else {
 		ctx.Conn.WriteString(RespOK)
+	}
+}
+
+func setnxCommandFunc(ctx Context) {
+	if len(ctx.args) != 3 {
+		ctx.Conn.WriteError(fmt.Sprintf(ErrWrongArgs, string(ctx.args[0])))
+		return
+	}
+	ok, err := ctx.db.SetNX(ctx.args[1], ctx.args[2])
+	if ok && err == nil {
+		ctx.Conn.WriteInt(RespSucc)
+	} else {
+		ctx.Conn.WriteInt(RespErr)
 	}
 }
 
