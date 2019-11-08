@@ -122,6 +122,20 @@ func (db *BadgerDB) DecrBy(key []byte, by int64) (int64, error) {
 	return valInt, nil
 }
 
+func (db *BadgerDB) MSet(keys, values [][]byte) error {
+	var err error
+	writer := db.storage.NewWriteBatch()
+	for i, key := range keys {
+		err = writer.Set(key, values[i])
+		if err != nil {
+			writer.Cancel()
+			return err
+		}
+	}
+
+	return writer.Flush()
+}
+
 func (db *BadgerDB) Del(key [][]byte) error {
 	return db.storage.Update(func(txn *badger.Txn) error {
 		for _, k := range key {

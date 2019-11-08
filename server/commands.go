@@ -24,6 +24,7 @@ var (
 		cmdIncrBy: incrByCommandFunc,
 		cmdDecr:   decrCommandFunc,
 		cmdDecrBy: decrByCommandFunc,
+		cmdMSet:   msetCommandFunc,
 
 		//DATABASE
 		cmdDel:    delCommandFunc,

@@ -13,6 +13,7 @@ const (
 	cmdIncrBy = "incrby"
 	cmdDecr   = "decr"
 	cmdDecrBy = "decrby"
+	cmdMSet   = "mset"
 )
 
 func setCommandFunc(ctx Context) {
@@ -77,7 +78,7 @@ func incrByCommandFunc(ctx Context) {
 
 	by, err := strconv.ParseInt(string(ctx.args[2]), 10, 64)
 	if err != nil {
-		ctx.Conn.WriteError("ERR value is not an integer or out of range")
+		ctx.Conn.WriteError(ErrValue)
 		return
 	}
 
@@ -110,7 +111,7 @@ func decrByCommandFunc(ctx Context) {
 
 	by, err := strconv.ParseInt(string(ctx.args[2]), 10, 64)
 	if err != nil {
-		ctx.Conn.WriteError("ERR value is not an integer or out of range")
+		ctx.Conn.WriteError(ErrValue)
 		return
 	}
 
@@ -120,4 +121,26 @@ func decrByCommandFunc(ctx Context) {
 		return
 	}
 	ctx.Conn.WriteInt64(val)
+}
+
+func msetCommandFunc(ctx Context) {
+	if len(ctx.args) < 2 || len(ctx.args)&1 != 1 {
+		ctx.Conn.WriteError(fmt.Sprintf(ErrWrongArgs, string(ctx.args[0])))
+		return
+	}
+
+	var keys, values [][]byte
+	var length = len(ctx.args[1:])
+	for i := 0; i < length; i += 2 {
+		keys = append(keys, ctx.args[1:][i])
+		values = append(values, ctx.args[1:][i+1])
+	}
+
+	err := ctx.db.MSet(keys, values)
+	if err != nil {
+		ctx.Conn.WriteError(err.Error())
+		return
+	}
+
+	ctx.Conn.WriteString(RespOK)
 }
