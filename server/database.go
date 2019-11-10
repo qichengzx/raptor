@@ -5,6 +5,7 @@ import "fmt"
 const (
 	cmdDel    = "del"
 	cmdExists = "exists"
+	cmdRename = "rename"
 )
 
 func delCommandFunc(ctx Context) {
@@ -32,5 +33,19 @@ func existsCommandFunc(ctx Context) {
 		ctx.Conn.WriteInt(0)
 	} else {
 		ctx.Conn.WriteInt(1)
+	}
+}
+
+func renameCommandFunc(ctx Context) {
+	if len(ctx.args) != 3 {
+		ctx.Conn.WriteError(fmt.Sprintf(ErrWrongArgs, string(ctx.args[0])))
+		return
+	}
+
+	err := ctx.db.Rename(ctx.args[1], ctx.args[2])
+	if err != nil {
+		ctx.Conn.WriteError(err.Error())
+	} else {
+		ctx.Conn.WriteString(RespOK)
 	}
 }

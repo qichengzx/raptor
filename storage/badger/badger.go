@@ -1,6 +1,7 @@
 package badger
 
 import (
+	"errors"
 	"github.com/dgraph-io/badger"
 	"github.com/qichengzx/raptor/config"
 	"strconv"
@@ -174,5 +175,17 @@ func (db *BadgerDB) Exists(key []byte) error {
 		}
 
 		return nil
+	})
+}
+
+func (db *BadgerDB) Rename(key, newkey []byte) error {
+	data, err := db.Get(key)
+	if err == badger.ErrKeyNotFound {
+		return errors.New("ERR no such key")
+	}
+
+	return db.storage.Update(func(txn *badger.Txn) error {
+		txn.Delete(key)
+		return txn.Set(newkey, data)
 	})
 }

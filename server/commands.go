@@ -31,5 +31,6 @@ var (
 		//DATABASE
 		cmdDel:    delCommandFunc,
 		cmdExists: existsCommandFunc,
+		cmdRename: renameCommandFunc,
 	}
 )
