@@ -32,5 +32,9 @@ var (
 		cmdDel:    delCommandFunc,
 		cmdExists: existsCommandFunc,
 		cmdRename: renameCommandFunc,
+
+		//DEBUG
+		cmdPing: pingCommandFunc,
+		cmdEcho: echoCommandFunc,
 	}
 )
