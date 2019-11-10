@@ -7,6 +7,7 @@ type DB interface {
 	Set(key, value []byte) error
 	SetNX(key, value []byte) (bool, error)
 	Get(key []byte) ([]byte, error)
+	GetSet(key, value []byte) ([]byte, error)
 	Strlen(key []byte) (int64, error)
 	Incr(key []byte) (int64, error)
 	IncrBy(key []byte, by int64) (int64, error)

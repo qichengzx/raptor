@@ -20,6 +20,7 @@ var (
 		cmdSet:    setCommandFunc,
 		cmdSetNX:  setnxCommandFunc,
 		cmdGet:    getCommandFunc,
+		cmdGetSet: getsetCommandFunc,
 		cmdStrlen: strlenCommandFunc,
 		cmdIncr:   incrCommandFunc,
 		cmdIncrBy: incrByCommandFunc,

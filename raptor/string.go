@@ -7,6 +7,13 @@ func (r *Raptor) Get(key []byte) ([]byte, error) {
 	return r.db.Get(key)
 }
 
+func (r *Raptor) GetSet(key, value []byte) ([]byte, error) {
+	if len(key) == 0 || len(value) == 0 {
+		return nil, ErrParams
+	}
+	return r.db.GetSet(key, value)
+}
+
 func (r *Raptor) Set(key, value []byte) error {
 	if len(key) == 0 || len(value) == 0 {
 		return ErrParams

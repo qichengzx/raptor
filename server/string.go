@@ -9,6 +9,7 @@ const (
 	cmdSet    = "set"
 	cmdSetNX  = "setnx"
 	cmdGet    = "get"
+	cmdGetSet = "getset"
 	cmdStrlen = "strlen"
 	cmdIncr   = "incr"
 	cmdIncrBy = "incrby"
@@ -54,6 +55,21 @@ func getCommandFunc(ctx Context) {
 		ctx.Conn.WriteNull()
 	} else {
 		ctx.Conn.WriteBulk(val)
+	}
+}
+
+func getsetCommandFunc(ctx Context) {
+	if len(ctx.args) != 3 {
+		ctx.Conn.WriteError(fmt.Sprintf(ErrWrongArgs, string(ctx.args[0])))
+		return
+	}
+	val, err := ctx.db.GetSet(ctx.args[1], ctx.args[2])
+	if err == nil && val == nil {
+		ctx.Conn.WriteNull()
+	} else if val != nil {
+		ctx.Conn.WriteBulk(val)
+	} else {
+		ctx.Conn.WriteNull()
 	}
 }
 
