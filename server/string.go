@@ -11,6 +11,7 @@ const (
 	cmdGet    = "get"
 	cmdGetSet = "getset"
 	cmdStrlen = "strlen"
+	cmdAppend = "append"
 	cmdIncr   = "incr"
 	cmdIncrBy = "incrby"
 	cmdDecr   = "decr"
@@ -84,6 +85,19 @@ func strlenCommandFunc(ctx Context) {
 		ctx.Conn.WriteInt(0)
 	} else {
 		ctx.Conn.WriteInt(len(string(val)))
+	}
+}
+
+func appendCommandFunc(ctx Context) {
+	if len(ctx.args) != 3 {
+		ctx.Conn.WriteError(fmt.Sprintf(ErrWrongArgs, string(ctx.args[0])))
+		return
+	}
+	length, err := ctx.db.Append(ctx.args[1], ctx.args[2])
+	if err == nil {
+		ctx.Conn.WriteInt(length)
+	} else {
+		ctx.Conn.WriteInt(0)
 	}
 }
 

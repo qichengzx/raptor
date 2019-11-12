@@ -36,6 +36,14 @@ func (r *Raptor) Strlen(key []byte) (int64, error) {
 	return r.db.Strlen(key)
 }
 
+func (r *Raptor) Append(key, value []byte) (int, error) {
+	if len(key) == 0 || len(value) == 0 {
+		return 0, ErrKeyEmpty
+	}
+
+	return r.db.Append(key, value)
+}
+
 func (r *Raptor) Incr(key []byte) (int64, error) {
 	return r.db.Incr(key)
 }

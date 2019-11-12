@@ -9,6 +9,7 @@ type DB interface {
 	Get(key []byte) ([]byte, error)
 	GetSet(key, value []byte) ([]byte, error)
 	Strlen(key []byte) (int64, error)
+	Append(key, value []byte) (int, error)
 	Incr(key []byte) (int64, error)
 	IncrBy(key []byte, by int64) (int64, error)
 	Decr(key []byte) (int64, error)

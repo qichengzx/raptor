@@ -94,6 +94,22 @@ func (db *BadgerDB) Strlen(key []byte) (int64, error) {
 	return length, err
 }
 
+func (db *BadgerDB) Append(key, value []byte) (int, error) {
+	val, err := db.Get(key)
+	if err == nil || err == badger.ErrKeyNotFound {
+		val = append(val, value...)
+
+		err := db.Set(key, val)
+		if err != nil {
+			return 0, err
+		}
+
+		return len(string(val)), nil
+	}
+
+	return 0, err
+}
+
 func (db *BadgerDB) Incr(key []byte) (int64, error) {
 	return db.IncrBy(key, 1)
 }

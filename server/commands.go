@@ -22,6 +22,7 @@ var (
 		cmdGet:    getCommandFunc,
 		cmdGetSet: getsetCommandFunc,
 		cmdStrlen: strlenCommandFunc,
+		cmdAppend: appendCommandFunc,
 		cmdIncr:   incrCommandFunc,
 		cmdIncrBy: incrByCommandFunc,
 		cmdDecr:   decrCommandFunc,
