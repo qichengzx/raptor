@@ -17,6 +17,7 @@ const (
 	cmdDecr   = "decr"
 	cmdDecrBy = "decrby"
 	cmdMSet   = "mset"
+	cmdMGet   = "mget"
 )
 
 func setCommandFunc(ctx Context) {
@@ -187,4 +188,28 @@ func msetCommandFunc(ctx Context) {
 	}
 
 	ctx.Conn.WriteString(RespOK)
+}
+
+func mgetCommandFunc(ctx Context) {
+	if len(ctx.args) < 2 {
+		ctx.Conn.WriteError(fmt.Sprintf(ErrWrongArgs, string(ctx.args[0])))
+		return
+	}
+
+	var keys = ctx.args[1:]
+	values, err := ctx.db.MGet(keys)
+	if err != nil {
+		ctx.Conn.WriteError(err.Error())
+		return
+	}
+
+	ctx.Conn.WriteArray(len(values))
+	for _, v := range values {
+		if v == nil {
+			ctx.Conn.WriteNull()
+		} else {
+			ctx.Conn.WriteBulk(v)
+		}
+	}
+	return
 }

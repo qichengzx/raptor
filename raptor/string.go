@@ -63,3 +63,7 @@ func (r *Raptor) DecrBy(key []byte, by int64) (int64, error) {
 func (r *Raptor) MSet(keys, values [][]byte) error {
 	return r.db.MSet(keys, values)
 }
+
+func (r *Raptor) MGet(keys [][]byte) ([][]byte, error) {
+	return r.db.MGet(keys)
+}

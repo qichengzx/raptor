@@ -28,6 +28,7 @@ var (
 		cmdDecr:   decrCommandFunc,
 		cmdDecrBy: decrByCommandFunc,
 		cmdMSet:   msetCommandFunc,
+		cmdMGet:   mgetCommandFunc,
 
 		//DATABASE
 		cmdDel:    delCommandFunc,

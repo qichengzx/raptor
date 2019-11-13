@@ -174,6 +174,30 @@ func (db *BadgerDB) MSet(keys, values [][]byte) error {
 	return writer.Flush()
 }
 
+func (db *BadgerDB) MGet(keys [][]byte) ([][]byte, error) {
+	var values = make([][]byte, len(keys))
+	err := db.storage.View(func(txn *badger.Txn) error {
+		for _, key := range keys {
+			item, err := txn.Get(key)
+			if err != nil {
+				values = append(values, nil)
+				continue
+			}
+
+			data, err := item.ValueCopy(nil)
+			if err != nil {
+				continue
+			}
+
+			values = append(values, data)
+		}
+
+		return nil
+	})
+
+	return values, err
+}
+
 func (db *BadgerDB) Del(key [][]byte) error {
 	return db.storage.Update(func(txn *badger.Txn) error {
 		for _, k := range key {
