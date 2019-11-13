@@ -6,7 +6,7 @@ import (
 )
 
 type Raptor struct {
-	db storage.DB
+	storage.DB
 }
 
 func New(conf *config.Config) (*Raptor, error) {
@@ -15,9 +15,9 @@ func New(conf *config.Config) (*Raptor, error) {
 		return nil, err
 	}
 
-	return &Raptor{db: db}, nil
+	return &Raptor{DB: db}, nil
 }
 
 func (r *Raptor) Close() error {
-	return r.db.Close()
+	return r.DB.Close()
 }
