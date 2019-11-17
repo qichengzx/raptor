@@ -24,5 +24,6 @@ type DB interface {
 
 	//expire
 	Expire(key []byte, seconds int) error
+	ExpireAt(key []byte, timestamp int64) error
 	TTL(key []byte) (int64, error)
 }

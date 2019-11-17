@@ -6,8 +6,9 @@ import (
 )
 
 const (
-	cmdExpire = "expire"
-	cmdTTL    = "ttl"
+	cmdExpire   = "expire"
+	cmdExpireAt = "expireat"
+	cmdTTL      = "ttl"
 )
 
 func expireCommandFunc(ctx Context) {
@@ -26,6 +27,25 @@ func expireCommandFunc(ctx Context) {
 		ctx.Conn.WriteInt(0)
 	} else {
 		ctx.Conn.WriteInt(1)
+	}
+}
+
+func expireatCommandFunc(ctx Context) {
+	if len(ctx.args) != 3 {
+		ctx.Conn.WriteError(fmt.Sprintf(ErrWrongArgs, string(ctx.args[0])))
+		return
+	}
+
+	timestamp, err := strconv.ParseInt(string(ctx.args[2]), 10, 64)
+	if err != nil {
+		ctx.Conn.WriteInt(RespErr)
+		return
+	}
+	err = ctx.db.ExpireAt(ctx.args[1], timestamp)
+	if err != nil {
+		ctx.Conn.WriteInt(RespErr)
+	} else {
+		ctx.Conn.WriteInt(RespSucc)
 	}
 }
 

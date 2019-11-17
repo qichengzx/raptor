@@ -36,8 +36,9 @@ var (
 		cmdRename: renameCommandFunc,
 
 		//EXPIRE
-		cmdExpire: expireCommandFunc,
-		cmdTTL:    ttlCommandFunc,
+		cmdExpire:   expireCommandFunc,
+		cmdExpireAt: expireatCommandFunc,
+		cmdTTL:      ttlCommandFunc,
 
 		//DEBUG
 		cmdPing: pingCommandFunc,

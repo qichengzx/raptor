@@ -243,6 +243,19 @@ func (db *BadgerDB) Expire(key []byte, seconds int) error {
 	})
 }
 
+func (db *BadgerDB) ExpireAt(key []byte, timestamp int64) error {
+	return db.storage.Update(func(txn *badger.Txn) (err error) {
+		data, err := db.Get(key)
+		if err != nil {
+			return err
+		}
+
+		ttl := timestamp - time.Now().Unix()
+		e := badger.NewEntry(key, data).WithTTL(time.Duration(ttl) * time.Second)
+		return txn.SetEntry(e)
+	})
+}
+
 func (db *BadgerDB) TTL(key []byte) (int64, error) {
 	var ttl int64
 	err := db.storage.View(func(txn *badger.Txn) error {
