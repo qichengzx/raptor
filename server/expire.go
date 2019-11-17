@@ -1,0 +1,29 @@
+package server
+
+import (
+	"fmt"
+	"strconv"
+)
+
+const (
+	cmdExpire = "expire"
+)
+
+func expireCommandFunc(ctx Context) {
+	if len(ctx.args) != 3 {
+		ctx.Conn.WriteError(fmt.Sprintf(ErrWrongArgs, string(ctx.args[0])))
+		return
+	}
+
+	seconds, err := strconv.Atoi(string(ctx.args[2]))
+	if err != nil {
+		ctx.Conn.WriteInt(0)
+		return
+	}
+	err = ctx.db.Expire(ctx.args[1], seconds)
+	if err != nil {
+		ctx.Conn.WriteInt(0)
+	} else {
+		ctx.Conn.WriteInt(1)
+	}
+}

@@ -21,4 +21,7 @@ type DB interface {
 	Del(key [][]byte) error
 	Exists(key []byte) error
 	Rename(key, newkey []byte) error
+
+	//expire
+	Expire(key []byte, seconds int) error
 }

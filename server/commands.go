@@ -35,6 +35,9 @@ var (
 		cmdExists: existsCommandFunc,
 		cmdRename: renameCommandFunc,
 
+		//EXPIRE
+		cmdExpire: expireCommandFunc,
+
 		//DEBUG
 		cmdPing: pingCommandFunc,
 		cmdEcho: echoCommandFunc,

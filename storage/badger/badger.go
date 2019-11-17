@@ -5,6 +5,7 @@ import (
 	"github.com/dgraph-io/badger"
 	"github.com/qichengzx/raptor/config"
 	"strconv"
+	"time"
 )
 
 type BadgerDB struct {
@@ -227,5 +228,17 @@ func (db *BadgerDB) Rename(key, newkey []byte) error {
 	return db.storage.Update(func(txn *badger.Txn) error {
 		txn.Delete(key)
 		return txn.Set(newkey, data)
+	})
+}
+
+func (db *BadgerDB) Expire(key []byte, seconds int) error {
+	return db.storage.Update(func(txn *badger.Txn) (err error) {
+		data, err := db.Get(key)
+		if err != nil {
+			return err
+		}
+
+		e := badger.NewEntry(key, data).WithTTL(time.Duration(seconds) * time.Second)
+		return txn.SetEntry(e)
 	})
 }
