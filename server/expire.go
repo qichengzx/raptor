@@ -7,6 +7,7 @@ import (
 
 const (
 	cmdExpire = "expire"
+	cmdTTL    = "ttl"
 )
 
 func expireCommandFunc(ctx Context) {
@@ -26,4 +27,14 @@ func expireCommandFunc(ctx Context) {
 	} else {
 		ctx.Conn.WriteInt(1)
 	}
+}
+
+func ttlCommandFunc(ctx Context) {
+	if len(ctx.args) != 2 {
+		ctx.Conn.WriteError(fmt.Sprintf(ErrWrongArgs, string(ctx.args[0])))
+		return
+	}
+
+	ttl, _ := ctx.db.TTL(ctx.args[1])
+	ctx.Conn.WriteInt64(ttl)
 }

@@ -242,3 +242,26 @@ func (db *BadgerDB) Expire(key []byte, seconds int) error {
 		return txn.SetEntry(e)
 	})
 }
+
+func (db *BadgerDB) TTL(key []byte) (int64, error) {
+	var ttl int64
+	err := db.storage.View(func(txn *badger.Txn) error {
+		item, err := txn.Get(key)
+		if err == badger.ErrKeyNotFound {
+			ttl = -2
+			return err
+		}
+
+		ttl = int64(item.ExpiresAt())
+		//if not set expire,will return 0,convert to -1
+		if ttl == 0 {
+			ttl = -1
+		} else {
+			ttl -= time.Now().Unix()
+		}
+
+		return nil
+	})
+
+	return ttl, err
+}

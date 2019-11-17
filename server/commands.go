@@ -37,6 +37,7 @@ var (
 
 		//EXPIRE
 		cmdExpire: expireCommandFunc,
+		cmdTTL:    ttlCommandFunc,
 
 		//DEBUG
 		cmdPing: pingCommandFunc,
