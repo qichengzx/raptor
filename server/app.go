@@ -27,9 +27,14 @@ func New(conf *config.Config) *App {
 		log.Fatal(err)
 	}
 
+	authed := false
+	if conf.Raptor.Auth == "" {
+		authed = true
+	}
 	return &App{
-		conf: conf,
-		db:   db,
+		conf:   conf,
+		db:     db,
+		authed: authed,
 	}
 }
 
