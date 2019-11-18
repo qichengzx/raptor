@@ -31,9 +31,10 @@ var (
 		cmdMGet:   mgetCommandFunc,
 
 		//DATABASE
-		cmdDel:    delCommandFunc,
-		cmdExists: existsCommandFunc,
-		cmdRename: renameCommandFunc,
+		cmdDel:     delCommandFunc,
+		cmdExists:  existsCommandFunc,
+		cmdRename:  renameCommandFunc,
+		cmdFlushDB: flushdbCommandFunc,
 
 		//EXPIRE
 		cmdExpire:   expireCommandFunc,

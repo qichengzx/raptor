@@ -3,9 +3,10 @@ package server
 import "fmt"
 
 const (
-	cmdDel    = "del"
-	cmdExists = "exists"
-	cmdRename = "rename"
+	cmdDel     = "del"
+	cmdExists  = "exists"
+	cmdRename  = "rename"
+	cmdFlushDB = "flushdb"
 )
 
 func delCommandFunc(ctx Context) {
@@ -48,4 +49,12 @@ func renameCommandFunc(ctx Context) {
 	} else {
 		ctx.Conn.WriteString(RespOK)
 	}
+}
+
+func flushdbCommandFunc(ctx Context) {
+	err := ctx.db.FlushDB()
+	if err != nil {
+		//TODO
+	}
+	ctx.Conn.WriteString(RespOK)
 }

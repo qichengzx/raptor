@@ -231,6 +231,10 @@ func (db *BadgerDB) Rename(key, newkey []byte) error {
 	})
 }
 
+func (db *BadgerDB) FlushDB() error {
+	return db.storage.DropAll()
+}
+
 func (db *BadgerDB) Expire(key []byte, seconds int) error {
 	return db.storage.Update(func(txn *badger.Txn) (err error) {
 		data, err := db.Get(key)
