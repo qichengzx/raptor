@@ -176,7 +176,7 @@ func (db *BadgerDB) MSet(keys, values [][]byte) error {
 }
 
 func (db *BadgerDB) MGet(keys [][]byte) ([][]byte, error) {
-	var values = make([][]byte, len(keys))
+	var values [][]byte
 	err := db.storage.View(func(txn *badger.Txn) error {
 		for _, key := range keys {
 			item, err := txn.Get(key)

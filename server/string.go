@@ -211,5 +211,4 @@ func mgetCommandFunc(ctx Context) {
 			ctx.Conn.WriteBulk(v)
 		}
 	}
-	return
 }
