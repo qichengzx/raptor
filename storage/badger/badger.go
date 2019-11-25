@@ -282,3 +282,20 @@ func (db *BadgerDB) TTL(key []byte) (int64, error) {
 
 	return ttl, err
 }
+
+func (db *BadgerDB) Persist(key []byte) error {
+	return db.storage.Update(func(txn *badger.Txn) (err error) {
+		item, err := txn.Get(key)
+		if err == badger.ErrKeyNotFound {
+			return err
+		}
+
+		if item.ExpiresAt() == 0 {
+			return errors.New("")
+		}
+
+		data, _ := item.ValueCopy(nil)
+		e := badger.NewEntry(key, data)
+		return txn.SetEntry(e)
+	})
+}

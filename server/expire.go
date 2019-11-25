@@ -9,6 +9,7 @@ const (
 	cmdExpire   = "expire"
 	cmdExpireAt = "expireat"
 	cmdTTL      = "ttl"
+	cmdPersist  = "persist"
 )
 
 func expireCommandFunc(ctx Context) {
@@ -57,4 +58,18 @@ func ttlCommandFunc(ctx Context) {
 
 	ttl, _ := ctx.db.TTL(ctx.args[1])
 	ctx.Conn.WriteInt64(ttl)
+}
+
+func persistCommandFunc(ctx Context) {
+	if len(ctx.args) != 2 {
+		ctx.Conn.WriteError(fmt.Sprintf(ErrWrongArgs, string(ctx.args[0])))
+		return
+	}
+
+	err := ctx.db.Persist(ctx.args[1])
+	if err == nil {
+		ctx.Conn.WriteInt(RespSucc)
+	} else {
+		ctx.Conn.WriteInt(RespErr)
+	}
 }
