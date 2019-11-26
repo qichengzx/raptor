@@ -34,6 +34,7 @@ var (
 		cmdDel:      delCommandFunc,
 		cmdExists:   existsCommandFunc,
 		cmdRename:   renameCommandFunc,
+		cmdRenameNX: renamenxCommandFunc,
 		cmdFlushDB:  flushdbCommandFunc,
 		cmdFlushAll: flushallCommandFunc,
 

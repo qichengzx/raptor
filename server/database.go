@@ -6,6 +6,7 @@ const (
 	cmdDel      = "del"
 	cmdExists   = "exists"
 	cmdRename   = "rename"
+	cmdRenameNX = "renamenx"
 	cmdFlushDB  = "flushdb"
 	cmdFlushAll = "flushall"
 )
@@ -49,6 +50,20 @@ func renameCommandFunc(ctx Context) {
 		ctx.Conn.WriteError(err.Error())
 	} else {
 		ctx.Conn.WriteString(RespOK)
+	}
+}
+
+func renamenxCommandFunc(ctx Context) {
+	if len(ctx.args) != 3 {
+		ctx.Conn.WriteError(fmt.Sprintf(ErrWrongArgs, string(ctx.args[0])))
+		return
+	}
+
+	err := ctx.db.RenameNX(ctx.args[1], ctx.args[2])
+	if err != nil {
+		ctx.Conn.WriteInt(RespErr)
+	} else {
+		ctx.Conn.WriteInt(RespSucc)
 	}
 }
 

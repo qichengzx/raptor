@@ -21,6 +21,7 @@ type DB interface {
 	Del(key [][]byte) error
 	Exists(key []byte) error
 	Rename(key, newkey []byte) error
+	RenameNX(key, newkey []byte) error
 	FlushDB() error
 
 	//expire

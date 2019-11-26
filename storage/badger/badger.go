@@ -231,6 +231,23 @@ func (db *BadgerDB) Rename(key, newkey []byte) error {
 	})
 }
 
+func (db *BadgerDB) RenameNX(key, newkey []byte) error {
+	data, err := db.Get(key)
+	if err != nil {
+		return errors.New("ERR no such key")
+	}
+
+	data2, err := db.Get(newkey)
+	if err == nil && data2 != nil {
+		return errors.New("ERR newkey is exist")
+	}
+
+	return db.storage.Update(func(txn *badger.Txn) error {
+		txn.Delete(key)
+		return txn.Set(newkey, data)
+	})
+}
+
 func (db *BadgerDB) FlushDB() error {
 	return db.storage.DropAll()
 }
