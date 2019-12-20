@@ -31,6 +31,7 @@ var (
 		cmdMGet:   mgetCommandFunc,
 
 		//DATABASE
+		cmdSelect:   selectCommandFunc,
 		cmdDel:      delCommandFunc,
 		cmdExists:   existsCommandFunc,
 		cmdRename:   renameCommandFunc,

@@ -3,6 +3,7 @@ package server
 import "fmt"
 
 const (
+	cmdSelect   = "select"
 	cmdDel      = "del"
 	cmdExists   = "exists"
 	cmdRename   = "rename"
@@ -10,6 +11,10 @@ const (
 	cmdFlushDB  = "flushdb"
 	cmdFlushAll = "flushall"
 )
+
+func selectCommandFunc(ctx Context) {
+	ctx.Conn.WriteString(RespOK)
+}
 
 func delCommandFunc(ctx Context) {
 	if len(ctx.args) < 2 {
