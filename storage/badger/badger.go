@@ -50,6 +50,13 @@ func (db *BadgerDB) SetNX(key, value []byte) (bool, error) {
 	return false, nil
 }
 
+func (db *BadgerDB) SetEX(key, value []byte, seconds int) error {
+	return db.storage.Update(func(txn *badger.Txn) error {
+		e := badger.NewEntry(key, value).WithTTL(time.Duration(seconds) * time.Second)
+		return txn.SetEntry(e)
+	})
+}
+
 func (db *BadgerDB) Get(key []byte) ([]byte, error) {
 	var data []byte
 	err := db.storage.View(func(txn *badger.Txn) error {

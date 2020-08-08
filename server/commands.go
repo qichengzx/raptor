@@ -19,6 +19,7 @@ var (
 		//STRING
 		cmdSet:    setCommandFunc,
 		cmdSetNX:  setnxCommandFunc,
+		cmdSetEX:  setexCommandFunc,
 		cmdGet:    getCommandFunc,
 		cmdGetSet: getsetCommandFunc,
 		cmdStrlen: strlenCommandFunc,

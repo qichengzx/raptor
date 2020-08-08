@@ -8,6 +8,7 @@ import (
 const (
 	cmdSet    = "set"
 	cmdSetNX  = "setnx"
+	cmdSetEX  = "setex"
 	cmdGet    = "get"
 	cmdGetSet = "getset"
 	cmdStrlen = "strlen"
@@ -40,6 +41,24 @@ func setnxCommandFunc(ctx Context) {
 	}
 	ok, err := ctx.db.SetNX(ctx.args[1], ctx.args[2])
 	if ok && err == nil {
+		ctx.Conn.WriteInt(RespSucc)
+	} else {
+		ctx.Conn.WriteInt(RespErr)
+	}
+}
+
+func setexCommandFunc(ctx Context) {
+	if len(ctx.args) != 4 {
+		ctx.Conn.WriteError(fmt.Sprintf(ErrWrongArgs, string(ctx.args[0])))
+		return
+	}
+	seconds, err := strconv.Atoi(string(ctx.args[3]))
+	if err != nil {
+		ctx.Conn.WriteInt(0)
+		return
+	}
+	err = ctx.db.SetEX(ctx.args[1], ctx.args[2], seconds)
+	if err == nil {
 		ctx.Conn.WriteInt(RespSucc)
 	} else {
 		ctx.Conn.WriteInt(RespErr)

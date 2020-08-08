@@ -6,6 +6,7 @@ type DB interface {
 	//string
 	Set(key, value []byte) error
 	SetNX(key, value []byte) (bool, error)
+	SetEX(key, value []byte, seconds int) error
 	Get(key []byte) ([]byte, error)
 	GetSet(key, value []byte) ([]byte, error)
 	Strlen(key []byte) (int64, error)
