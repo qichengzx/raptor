@@ -117,16 +117,24 @@ func (db *BadgerDB) Strlen(key []byte) (int64, error) {
 }
 
 func (db *BadgerDB) Append(key, value []byte) (int, error) {
-	val, err := db.Get(key)
-	if err == nil || err == badger.ErrKeyNotFound {
-		val = append(val, value...)
+	var length = 0
+	err := db.storage.Update(func(txn *badger.Txn) error {
+		val, err := db.Get(key)
+		if err == nil || err == badger.ErrKeyNotFound {
+			val = append(val, value...)
 
-		err := db.Set(key, val)
-		if err != nil {
-			return 0, err
+			err := db.Set(key, val)
+			if err != nil {
+				return err
+			}
+			length = len(string(val))
+			return nil
 		}
+		return nil
+	})
 
-		return len(string(val)), nil
+	if err == nil {
+		return length, nil
 	}
 
 	return 0, err
