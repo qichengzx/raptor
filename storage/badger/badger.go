@@ -87,13 +87,17 @@ func (db *BadgerDB) Get(key []byte) ([]byte, error) {
 }
 
 func (db *BadgerDB) GetSet(key, value []byte) ([]byte, error) {
-	data, err := db.Get(key)
-	if err == badger.ErrKeyNotFound {
-		err = db.Set(key, value)
-		return nil, err
-	}
+	var data []byte
+	err := db.storage.Update(func(txn *badger.Txn) error {
+		v, err := db.Get(key)
+		if err == badger.ErrKeyNotFound {
+			return nil
+		}
 
-	err = db.Set(key, value)
+		data = v
+		return db.Set(key, value)
+	})
+
 	return data, err
 }
 
