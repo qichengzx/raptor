@@ -140,10 +140,6 @@ func (db *BadgerDB) Append(key, value []byte) (int, error) {
 	return 0, err
 }
 
-func (db *BadgerDB) Incr(key []byte) (int64, error) {
-	return db.IncrBy(key, 1)
-}
-
 func (db *BadgerDB) IncrBy(key []byte, by int64) (int64, error) {
 	var v int64 = 0
 	err := db.storage.Update(func(txn *badger.Txn) error {
@@ -171,10 +167,6 @@ func (db *BadgerDB) IncrBy(key []byte, by int64) (int64, error) {
 	return v, err
 }
 
-func (db *BadgerDB) Decr(key []byte) (int64, error) {
-	return db.DecrBy(key, 1)
-}
-
 func (db *BadgerDB) DecrBy(key []byte, by int64) (int64, error) {
 	val, err := db.Get(key)
 	if err != nil {
@@ -183,7 +175,7 @@ func (db *BadgerDB) DecrBy(key []byte, by int64) (int64, error) {
 
 	valInt, err := strconv.ParseInt(string(val), 10, 64)
 	if err != nil {
-		return 0, err
+		return 0, errors.New("ERR value is not an integer or out of range")
 	}
 	valInt -= by
 
