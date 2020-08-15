@@ -21,7 +21,7 @@ func delCommandFunc(ctx Context) {
 	if err != nil {
 		ctx.Conn.WriteInt(0)
 	} else {
-		ctx.Conn.WriteInt(1)
+		ctx.Conn.WriteInt(len(ctx.args[1:]))
 	}
 }
 
