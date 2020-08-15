@@ -208,6 +208,29 @@ func (db *BadgerDB) MSet(keys, values [][]byte) error {
 	return writer.Flush()
 }
 
+func (db *BadgerDB) MSetNX(keys, values [][]byte) error {
+	err := db.storage.Update(func(txn *badger.Txn) error {
+		writer := db.storage.NewWriteBatch()
+		for i, key := range keys {
+			v, err := txn.Get(key)
+			if err == nil && v != nil {
+				writer.Cancel()
+				return errors.New("Key exists")
+			}
+
+			err = writer.Set(key, values[i])
+			if err != nil {
+				writer.Cancel()
+				return err
+			}
+		}
+
+		return writer.Flush()
+	})
+
+	return err
+}
+
 func (db *BadgerDB) MGet(keys [][]byte) ([][]byte, error) {
 	var values [][]byte
 	err := db.storage.View(func(txn *badger.Txn) error {

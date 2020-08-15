@@ -18,6 +18,7 @@ const (
 	cmdDecr   = "decr"
 	cmdDecrBy = "decrby"
 	cmdMSet   = "mset"
+	cmdMSetNX = "msetnx"
 	cmdMGet   = "mget"
 )
 
@@ -207,6 +208,27 @@ func msetCommandFunc(ctx Context) {
 	}
 
 	ctx.Conn.WriteString(RespOK)
+}
+
+func msetnxCommandFunc(ctx Context) {
+	if len(ctx.args) < 2 || len(ctx.args)&1 != 1 {
+		ctx.Conn.WriteError(fmt.Sprintf(ErrWrongArgs, string(ctx.args[0])))
+		return
+	}
+
+	var keys, values [][]byte
+	var length = len(ctx.args[1:])
+	for i := 0; i < length; i += 2 {
+		keys = append(keys, ctx.args[1:][i])
+		values = append(values, ctx.args[1:][i+1])
+	}
+
+	err := ctx.db.MSetNX(keys, values)
+	if err != nil {
+		ctx.Conn.WriteInt(0)
+	} else {
+		ctx.Conn.WriteInt(1)
+	}
 }
 
 func mgetCommandFunc(ctx Context) {
