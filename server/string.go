@@ -24,7 +24,7 @@ const (
 
 func setCommandFunc(ctx Context) {
 	if len(ctx.args) != 3 {
-		ctx.Conn.WriteError(fmt.Sprintf(ErrWrongArgs, string(ctx.args[0])))
+		ctx.Conn.WriteError(fmt.Sprintf(ErrWrongArgs, ctx.cmd))
 		return
 	}
 	err := ctx.db.Set(ctx.args[1], ctx.args[2])
@@ -37,7 +37,7 @@ func setCommandFunc(ctx Context) {
 
 func setnxCommandFunc(ctx Context) {
 	if len(ctx.args) != 3 {
-		ctx.Conn.WriteError(fmt.Sprintf(ErrWrongArgs, string(ctx.args[0])))
+		ctx.Conn.WriteError(fmt.Sprintf(ErrWrongArgs, ctx.cmd))
 		return
 	}
 	ok, err := ctx.db.SetNX(ctx.args[1], ctx.args[2])
@@ -50,7 +50,7 @@ func setnxCommandFunc(ctx Context) {
 
 func setexCommandFunc(ctx Context) {
 	if len(ctx.args) != 4 {
-		ctx.Conn.WriteError(fmt.Sprintf(ErrWrongArgs, string(ctx.args[0])))
+		ctx.Conn.WriteError(fmt.Sprintf(ErrWrongArgs, ctx.cmd))
 		return
 	}
 	seconds, err := strconv.Atoi(string(ctx.args[2]))
@@ -68,7 +68,7 @@ func setexCommandFunc(ctx Context) {
 
 func getCommandFunc(ctx Context) {
 	if len(ctx.args) != 2 {
-		ctx.Conn.WriteError(fmt.Sprintf(ErrWrongArgs, string(ctx.args[0])))
+		ctx.Conn.WriteError(fmt.Sprintf(ErrWrongArgs, ctx.cmd))
 		return
 	}
 
@@ -82,7 +82,7 @@ func getCommandFunc(ctx Context) {
 
 func getsetCommandFunc(ctx Context) {
 	if len(ctx.args) != 3 {
-		ctx.Conn.WriteError(fmt.Sprintf(ErrWrongArgs, string(ctx.args[0])))
+		ctx.Conn.WriteError(fmt.Sprintf(ErrWrongArgs, ctx.cmd))
 		return
 	}
 	val, err := ctx.db.GetSet(ctx.args[1], ctx.args[2])
@@ -97,7 +97,7 @@ func getsetCommandFunc(ctx Context) {
 
 func strlenCommandFunc(ctx Context) {
 	if len(ctx.args) != 2 {
-		ctx.Conn.WriteError(fmt.Sprintf(ErrWrongArgs, string(ctx.args[0])))
+		ctx.Conn.WriteError(fmt.Sprintf(ErrWrongArgs, ctx.cmd))
 		return
 	}
 
@@ -111,7 +111,7 @@ func strlenCommandFunc(ctx Context) {
 
 func appendCommandFunc(ctx Context) {
 	if len(ctx.args) != 3 {
-		ctx.Conn.WriteError(fmt.Sprintf(ErrWrongArgs, string(ctx.args[0])))
+		ctx.Conn.WriteError(fmt.Sprintf(ErrWrongArgs, ctx.cmd))
 		return
 	}
 	length, err := ctx.db.Append(ctx.args[1], ctx.args[2])
@@ -124,7 +124,7 @@ func appendCommandFunc(ctx Context) {
 
 func incrCommandFunc(ctx Context) {
 	if len(ctx.args) != 2 {
-		ctx.Conn.WriteError(fmt.Sprintf(ErrWrongArgs, string(ctx.args[0])))
+		ctx.Conn.WriteError(fmt.Sprintf(ErrWrongArgs, ctx.cmd))
 		return
 	}
 	val, err := ctx.db.IncrBy(ctx.args[1], 1)
@@ -137,7 +137,7 @@ func incrCommandFunc(ctx Context) {
 
 func incrByCommandFunc(ctx Context) {
 	if len(ctx.args) != 3 {
-		ctx.Conn.WriteError(fmt.Sprintf(ErrWrongArgs, string(ctx.args[0])))
+		ctx.Conn.WriteError(fmt.Sprintf(ErrWrongArgs, ctx.cmd))
 		return
 	}
 
@@ -157,7 +157,7 @@ func incrByCommandFunc(ctx Context) {
 
 func decrCommandFunc(ctx Context) {
 	if len(ctx.args) != 2 {
-		ctx.Conn.WriteError(fmt.Sprintf(ErrWrongArgs, string(ctx.args[0])))
+		ctx.Conn.WriteError(fmt.Sprintf(ErrWrongArgs, ctx.cmd))
 		return
 	}
 	val, err := ctx.db.DecrBy(ctx.args[1], 1)
@@ -170,7 +170,7 @@ func decrCommandFunc(ctx Context) {
 
 func decrByCommandFunc(ctx Context) {
 	if len(ctx.args) != 3 {
-		ctx.Conn.WriteError(fmt.Sprintf(ErrWrongArgs, string(ctx.args[0])))
+		ctx.Conn.WriteError(fmt.Sprintf(ErrWrongArgs, ctx.cmd))
 		return
 	}
 
@@ -190,7 +190,7 @@ func decrByCommandFunc(ctx Context) {
 
 func msetCommandFunc(ctx Context) {
 	if len(ctx.args) < 2 || len(ctx.args)&1 != 1 {
-		ctx.Conn.WriteError(fmt.Sprintf(ErrWrongArgs, string(ctx.args[0])))
+		ctx.Conn.WriteError(fmt.Sprintf(ErrWrongArgs, ctx.cmd))
 		return
 	}
 
@@ -212,7 +212,7 @@ func msetCommandFunc(ctx Context) {
 
 func msetnxCommandFunc(ctx Context) {
 	if len(ctx.args) < 2 || len(ctx.args)&1 != 1 {
-		ctx.Conn.WriteError(fmt.Sprintf(ErrWrongArgs, string(ctx.args[0])))
+		ctx.Conn.WriteError(fmt.Sprintf(ErrWrongArgs, ctx.cmd))
 		return
 	}
 
@@ -233,7 +233,7 @@ func msetnxCommandFunc(ctx Context) {
 
 func mgetCommandFunc(ctx Context) {
 	if len(ctx.args) < 2 {
-		ctx.Conn.WriteError(fmt.Sprintf(ErrWrongArgs, string(ctx.args[0])))
+		ctx.Conn.WriteError(fmt.Sprintf(ErrWrongArgs, ctx.cmd))
 		return
 	}
 
