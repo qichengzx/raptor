@@ -47,7 +47,7 @@ func (db *BadgerDB) SetNX(key, value []byte) (bool, error) {
 			return errors.New("Key exists")
 		}
 		if err == badger.ErrKeyNotFound {
-			return db.Set(key, value)
+			return txn.Set(key, value)
 		}
 
 		return err
@@ -95,7 +95,7 @@ func (db *BadgerDB) GetSet(key, value []byte) ([]byte, error) {
 		}
 
 		data = v
-		return db.Set(key, value)
+		return txn.Set(key, value)
 	})
 
 	return data, err
@@ -123,7 +123,7 @@ func (db *BadgerDB) Append(key, value []byte) (int, error) {
 		if err == nil || err == badger.ErrKeyNotFound {
 			val = append(val, value...)
 
-			err := db.Set(key, val)
+			err := txn.Set(key, val)
 			if err != nil {
 				return err
 			}
@@ -155,7 +155,7 @@ func (db *BadgerDB) IncrBy(key []byte, by int64) (int64, error) {
 		valInt += by
 
 		valStr := strconv.FormatInt(valInt, 10)
-		err = db.Set(key, []byte(valStr))
+		err = txn.Set(key, []byte(valStr))
 		if err != nil {
 			return err
 		}
@@ -182,7 +182,7 @@ func (db *BadgerDB) DecrBy(key []byte, by int64) (int64, error) {
 		valInt -= by
 
 		valStr := strconv.FormatInt(valInt, 10)
-		err = db.Set(key, []byte(valStr))
+		err = txn.Set(key, []byte(valStr))
 		if err != nil {
 			return err
 		}
