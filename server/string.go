@@ -53,12 +53,12 @@ func setexCommandFunc(ctx Context) {
 		ctx.Conn.WriteError(fmt.Sprintf(ErrWrongArgs, string(ctx.args[0])))
 		return
 	}
-	seconds, err := strconv.Atoi(string(ctx.args[3]))
+	seconds, err := strconv.Atoi(string(ctx.args[2]))
 	if err != nil {
 		ctx.Conn.WriteInt(0)
 		return
 	}
-	err = ctx.db.SetEX(ctx.args[1], ctx.args[2], seconds)
+	err = ctx.db.SetEX(ctx.args[1], ctx.args[3], seconds)
 	if err == nil {
 		ctx.Conn.WriteInt(RespSucc)
 	} else {
