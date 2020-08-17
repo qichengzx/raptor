@@ -18,7 +18,7 @@ func selectCommandFunc(ctx Context) {
 
 func delCommandFunc(ctx Context) {
 	if len(ctx.args) < 2 {
-		ctx.Conn.WriteError(fmt.Sprintf(ErrWrongArgs, string(ctx.args[0])))
+		ctx.Conn.WriteError(fmt.Sprintf(ErrWrongArgs, ctx.cmd))
 		return
 	}
 
@@ -26,13 +26,13 @@ func delCommandFunc(ctx Context) {
 	if err != nil {
 		ctx.Conn.WriteInt(0)
 	} else {
-		ctx.Conn.WriteInt(1)
+		ctx.Conn.WriteInt(len(ctx.args[1:]))
 	}
 }
 
 func existsCommandFunc(ctx Context) {
 	if len(ctx.args) != 2 {
-		ctx.Conn.WriteError(fmt.Sprintf(ErrWrongArgs, string(ctx.args[0])))
+		ctx.Conn.WriteError(fmt.Sprintf(ErrWrongArgs, ctx.cmd))
 		return
 	}
 
@@ -46,7 +46,7 @@ func existsCommandFunc(ctx Context) {
 
 func renameCommandFunc(ctx Context) {
 	if len(ctx.args) != 3 {
-		ctx.Conn.WriteError(fmt.Sprintf(ErrWrongArgs, string(ctx.args[0])))
+		ctx.Conn.WriteError(fmt.Sprintf(ErrWrongArgs, ctx.cmd))
 		return
 	}
 
@@ -60,7 +60,7 @@ func renameCommandFunc(ctx Context) {
 
 func renamenxCommandFunc(ctx Context) {
 	if len(ctx.args) != 3 {
-		ctx.Conn.WriteError(fmt.Sprintf(ErrWrongArgs, string(ctx.args[0])))
+		ctx.Conn.WriteError(fmt.Sprintf(ErrWrongArgs, ctx.cmd))
 		return
 	}
 

@@ -8,6 +8,7 @@ import (
 const (
 	cmdSet    = "set"
 	cmdSetNX  = "setnx"
+	cmdSetEX  = "setex"
 	cmdGet    = "get"
 	cmdGetSet = "getset"
 	cmdStrlen = "strlen"
@@ -17,12 +18,13 @@ const (
 	cmdDecr   = "decr"
 	cmdDecrBy = "decrby"
 	cmdMSet   = "mset"
+	cmdMSetNX = "msetnx"
 	cmdMGet   = "mget"
 )
 
 func setCommandFunc(ctx Context) {
 	if len(ctx.args) != 3 {
-		ctx.Conn.WriteError(fmt.Sprintf(ErrWrongArgs, string(ctx.args[0])))
+		ctx.Conn.WriteError(fmt.Sprintf(ErrWrongArgs, ctx.cmd))
 		return
 	}
 	err := ctx.db.Set(ctx.args[1], ctx.args[2])
@@ -35,7 +37,7 @@ func setCommandFunc(ctx Context) {
 
 func setnxCommandFunc(ctx Context) {
 	if len(ctx.args) != 3 {
-		ctx.Conn.WriteError(fmt.Sprintf(ErrWrongArgs, string(ctx.args[0])))
+		ctx.Conn.WriteError(fmt.Sprintf(ErrWrongArgs, ctx.cmd))
 		return
 	}
 	ok, err := ctx.db.SetNX(ctx.args[1], ctx.args[2])
@@ -46,9 +48,27 @@ func setnxCommandFunc(ctx Context) {
 	}
 }
 
+func setexCommandFunc(ctx Context) {
+	if len(ctx.args) != 4 {
+		ctx.Conn.WriteError(fmt.Sprintf(ErrWrongArgs, ctx.cmd))
+		return
+	}
+	seconds, err := strconv.Atoi(string(ctx.args[2]))
+	if err != nil {
+		ctx.Conn.WriteInt(0)
+		return
+	}
+	err = ctx.db.SetEX(ctx.args[1], ctx.args[3], seconds)
+	if err == nil {
+		ctx.Conn.WriteInt(RespSucc)
+	} else {
+		ctx.Conn.WriteInt(RespErr)
+	}
+}
+
 func getCommandFunc(ctx Context) {
 	if len(ctx.args) != 2 {
-		ctx.Conn.WriteError(fmt.Sprintf(ErrWrongArgs, string(ctx.args[0])))
+		ctx.Conn.WriteError(fmt.Sprintf(ErrWrongArgs, ctx.cmd))
 		return
 	}
 
@@ -62,7 +82,7 @@ func getCommandFunc(ctx Context) {
 
 func getsetCommandFunc(ctx Context) {
 	if len(ctx.args) != 3 {
-		ctx.Conn.WriteError(fmt.Sprintf(ErrWrongArgs, string(ctx.args[0])))
+		ctx.Conn.WriteError(fmt.Sprintf(ErrWrongArgs, ctx.cmd))
 		return
 	}
 	val, err := ctx.db.GetSet(ctx.args[1], ctx.args[2])
@@ -77,7 +97,7 @@ func getsetCommandFunc(ctx Context) {
 
 func strlenCommandFunc(ctx Context) {
 	if len(ctx.args) != 2 {
-		ctx.Conn.WriteError(fmt.Sprintf(ErrWrongArgs, string(ctx.args[0])))
+		ctx.Conn.WriteError(fmt.Sprintf(ErrWrongArgs, ctx.cmd))
 		return
 	}
 
@@ -91,7 +111,7 @@ func strlenCommandFunc(ctx Context) {
 
 func appendCommandFunc(ctx Context) {
 	if len(ctx.args) != 3 {
-		ctx.Conn.WriteError(fmt.Sprintf(ErrWrongArgs, string(ctx.args[0])))
+		ctx.Conn.WriteError(fmt.Sprintf(ErrWrongArgs, ctx.cmd))
 		return
 	}
 	length, err := ctx.db.Append(ctx.args[1], ctx.args[2])
@@ -104,10 +124,10 @@ func appendCommandFunc(ctx Context) {
 
 func incrCommandFunc(ctx Context) {
 	if len(ctx.args) != 2 {
-		ctx.Conn.WriteError(fmt.Sprintf(ErrWrongArgs, string(ctx.args[0])))
+		ctx.Conn.WriteError(fmt.Sprintf(ErrWrongArgs, ctx.cmd))
 		return
 	}
-	val, err := ctx.db.Incr(ctx.args[1])
+	val, err := ctx.db.IncrBy(ctx.args[1], 1)
 	if err != nil {
 		ctx.Conn.WriteError(err.Error())
 		return
@@ -117,7 +137,7 @@ func incrCommandFunc(ctx Context) {
 
 func incrByCommandFunc(ctx Context) {
 	if len(ctx.args) != 3 {
-		ctx.Conn.WriteError(fmt.Sprintf(ErrWrongArgs, string(ctx.args[0])))
+		ctx.Conn.WriteError(fmt.Sprintf(ErrWrongArgs, ctx.cmd))
 		return
 	}
 
@@ -137,10 +157,10 @@ func incrByCommandFunc(ctx Context) {
 
 func decrCommandFunc(ctx Context) {
 	if len(ctx.args) != 2 {
-		ctx.Conn.WriteError(fmt.Sprintf(ErrWrongArgs, string(ctx.args[0])))
+		ctx.Conn.WriteError(fmt.Sprintf(ErrWrongArgs, ctx.cmd))
 		return
 	}
-	val, err := ctx.db.Decr(ctx.args[1])
+	val, err := ctx.db.DecrBy(ctx.args[1], 1)
 	if err != nil {
 		ctx.Conn.WriteError(err.Error())
 		return
@@ -150,7 +170,7 @@ func decrCommandFunc(ctx Context) {
 
 func decrByCommandFunc(ctx Context) {
 	if len(ctx.args) != 3 {
-		ctx.Conn.WriteError(fmt.Sprintf(ErrWrongArgs, string(ctx.args[0])))
+		ctx.Conn.WriteError(fmt.Sprintf(ErrWrongArgs, ctx.cmd))
 		return
 	}
 
@@ -170,7 +190,7 @@ func decrByCommandFunc(ctx Context) {
 
 func msetCommandFunc(ctx Context) {
 	if len(ctx.args) < 2 || len(ctx.args)&1 != 1 {
-		ctx.Conn.WriteError(fmt.Sprintf(ErrWrongArgs, string(ctx.args[0])))
+		ctx.Conn.WriteError(fmt.Sprintf(ErrWrongArgs, ctx.cmd))
 		return
 	}
 
@@ -190,9 +210,30 @@ func msetCommandFunc(ctx Context) {
 	ctx.Conn.WriteString(RespOK)
 }
 
+func msetnxCommandFunc(ctx Context) {
+	if len(ctx.args) < 2 || len(ctx.args)&1 != 1 {
+		ctx.Conn.WriteError(fmt.Sprintf(ErrWrongArgs, ctx.cmd))
+		return
+	}
+
+	var keys, values [][]byte
+	var length = len(ctx.args[1:])
+	for i := 0; i < length; i += 2 {
+		keys = append(keys, ctx.args[1:][i])
+		values = append(values, ctx.args[1:][i+1])
+	}
+
+	err := ctx.db.MSetNX(keys, values)
+	if err != nil {
+		ctx.Conn.WriteInt(0)
+	} else {
+		ctx.Conn.WriteInt(1)
+	}
+}
+
 func mgetCommandFunc(ctx Context) {
 	if len(ctx.args) < 2 {
-		ctx.Conn.WriteError(fmt.Sprintf(ErrWrongArgs, string(ctx.args[0])))
+		ctx.Conn.WriteError(fmt.Sprintf(ErrWrongArgs, ctx.cmd))
 		return
 	}
 

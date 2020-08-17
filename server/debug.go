@@ -9,7 +9,7 @@ const (
 
 func echoCommandFunc(ctx Context) {
 	if len(ctx.args) != 2 {
-		ctx.Conn.WriteError(fmt.Sprintf(ErrWrongArgs, string(ctx.args[0])))
+		ctx.Conn.WriteError(fmt.Sprintf(ErrWrongArgs, ctx.cmd))
 		return
 	}
 

@@ -41,13 +41,30 @@ func (db *BadgerDB) Set(key, value []byte) error {
 }
 
 func (db *BadgerDB) SetNX(key, value []byte) (bool, error) {
-	_, err := db.Get(key)
-	if err == badger.ErrKeyNotFound {
-		err = db.Set(key, value)
-		return true, err
+	err := db.storage.Update(func(txn *badger.Txn) error {
+		data, err := db.Get(key)
+		if data != nil {
+			return errors.New("Key exists")
+		}
+		if err == badger.ErrKeyNotFound {
+			return txn.Set(key, value)
+		}
+
+		return err
+	})
+
+	if err == nil {
+		return true, nil
 	}
 
-	return false, nil
+	return false, err
+}
+
+func (db *BadgerDB) SetEX(key, value []byte, seconds int) error {
+	return db.storage.Update(func(txn *badger.Txn) error {
+		e := badger.NewEntry(key, value).WithTTL(time.Duration(seconds) * time.Second)
+		return txn.SetEntry(e)
+	})
 }
 
 func (db *BadgerDB) Get(key []byte) ([]byte, error) {
@@ -70,13 +87,17 @@ func (db *BadgerDB) Get(key []byte) ([]byte, error) {
 }
 
 func (db *BadgerDB) GetSet(key, value []byte) ([]byte, error) {
-	data, err := db.Get(key)
-	if err == badger.ErrKeyNotFound {
-		err = db.Set(key, value)
-		return nil, err
-	}
+	var data []byte
+	err := db.storage.Update(func(txn *badger.Txn) error {
+		v, err := db.Get(key)
+		if err == badger.ErrKeyNotFound {
+			return nil
+		}
 
-	err = db.Set(key, value)
+		data = v
+		return txn.Set(key, value)
+	})
+
 	return data, err
 }
 
@@ -96,69 +117,81 @@ func (db *BadgerDB) Strlen(key []byte) (int64, error) {
 }
 
 func (db *BadgerDB) Append(key, value []byte) (int, error) {
-	val, err := db.Get(key)
-	if err == nil || err == badger.ErrKeyNotFound {
-		val = append(val, value...)
+	var length = 0
+	err := db.storage.Update(func(txn *badger.Txn) error {
+		val, err := db.Get(key)
+		if err == nil || err == badger.ErrKeyNotFound {
+			val = append(val, value...)
 
-		err := db.Set(key, val)
-		if err != nil {
-			return 0, err
+			err := txn.Set(key, val)
+			if err != nil {
+				return err
+			}
+			length = len(string(val))
+			return nil
 		}
+		return nil
+	})
 
-		return len(string(val)), nil
+	if err == nil {
+		return length, nil
 	}
 
 	return 0, err
 }
 
-func (db *BadgerDB) Incr(key []byte) (int64, error) {
-	return db.IncrBy(key, 1)
-}
-
 func (db *BadgerDB) IncrBy(key []byte, by int64) (int64, error) {
-	val, err := db.Get(key)
-	if err != nil {
-		val = []byte("0")
-	}
+	var v int64 = 0
+	err := db.storage.Update(func(txn *badger.Txn) error {
+		val, err := db.Get(key)
+		if err != nil {
+			val = []byte("0")
+		}
 
-	valInt, err := strconv.ParseInt(string(val), 10, 64)
-	if err != nil {
-		return 0, err
-	}
-	valInt += by
+		valInt, err := strconv.ParseInt(string(val), 10, 64)
+		if err != nil {
+			return errors.New("ERR value is not an integer or out of range")
+		}
+		valInt += by
 
-	valStr := strconv.FormatInt(valInt, 10)
-	err = db.Set(key, []byte(valStr))
-	if err != nil {
-		return 0, err
-	}
+		valStr := strconv.FormatInt(valInt, 10)
+		err = txn.Set(key, []byte(valStr))
+		if err != nil {
+			return err
+		}
 
-	return valInt, nil
-}
+		v = valInt
+		return nil
+	})
 
-func (db *BadgerDB) Decr(key []byte) (int64, error) {
-	return db.DecrBy(key, 1)
+	return v, err
 }
 
 func (db *BadgerDB) DecrBy(key []byte, by int64) (int64, error) {
-	val, err := db.Get(key)
-	if err != nil {
-		val = []byte("0")
-	}
+	var v int64 = 0
+	err := db.storage.Update(func(txn *badger.Txn) error {
+		val, err := db.Get(key)
+		if err != nil {
+			val = []byte("0")
+		}
 
-	valInt, err := strconv.ParseInt(string(val), 10, 64)
-	if err != nil {
-		return 0, err
-	}
-	valInt -= by
+		valInt, err := strconv.ParseInt(string(val), 10, 64)
+		if err != nil {
+			return errors.New("ERR value is not an integer or out of range")
+		}
+		valInt -= by
 
-	valStr := strconv.FormatInt(valInt, 10)
-	err = db.Set(key, []byte(valStr))
-	if err != nil {
-		return 0, err
-	}
+		valStr := strconv.FormatInt(valInt, 10)
+		err = txn.Set(key, []byte(valStr))
+		if err != nil {
+			return err
+		}
 
-	return valInt, nil
+		v = valInt
+		return nil
+	})
+
+	return v, err
 }
 
 func (db *BadgerDB) MSet(keys, values [][]byte) error {
@@ -173,6 +206,29 @@ func (db *BadgerDB) MSet(keys, values [][]byte) error {
 	}
 
 	return writer.Flush()
+}
+
+func (db *BadgerDB) MSetNX(keys, values [][]byte) error {
+	err := db.storage.Update(func(txn *badger.Txn) error {
+		writer := db.storage.NewWriteBatch()
+		for i, key := range keys {
+			v, err := txn.Get(key)
+			if err == nil && v != nil {
+				writer.Cancel()
+				return errors.New("Key exists")
+			}
+
+			err = writer.Set(key, values[i])
+			if err != nil {
+				writer.Cancel()
+				return err
+			}
+		}
+
+		return writer.Flush()
+	})
+
+	return err
 }
 
 func (db *BadgerDB) MGet(keys [][]byte) ([][]byte, error) {
@@ -220,29 +276,29 @@ func (db *BadgerDB) Exists(key []byte) error {
 }
 
 func (db *BadgerDB) Rename(key, newkey []byte) error {
-	data, err := db.Get(key)
-	if err == badger.ErrKeyNotFound {
-		return errors.New("ERR no such key")
-	}
-
 	return db.storage.Update(func(txn *badger.Txn) error {
+		data, err := db.Get(key)
+		if err == badger.ErrKeyNotFound {
+			return errors.New("ERR no such key")
+		}
+
 		txn.Delete(key)
 		return txn.Set(newkey, data)
 	})
 }
 
 func (db *BadgerDB) RenameNX(key, newkey []byte) error {
-	data, err := db.Get(key)
-	if err != nil {
-		return errors.New("ERR no such key")
-	}
-
-	data2, err := db.Get(newkey)
-	if err == nil && data2 != nil {
-		return errors.New("ERR newkey is exist")
-	}
-
 	return db.storage.Update(func(txn *badger.Txn) error {
+		data, err := db.Get(key)
+		if err != nil {
+			return errors.New("ERR no such key")
+		}
+
+		data2, err := db.Get(newkey)
+		if err == nil && data2 != nil {
+			return errors.New("ERR newkey is exist")
+		}
+
 		txn.Delete(key)
 		return txn.Set(newkey, data)
 	})

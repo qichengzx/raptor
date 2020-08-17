@@ -14,7 +14,7 @@ const (
 
 func expireCommandFunc(ctx Context) {
 	if len(ctx.args) != 3 {
-		ctx.Conn.WriteError(fmt.Sprintf(ErrWrongArgs, string(ctx.args[0])))
+		ctx.Conn.WriteError(fmt.Sprintf(ErrWrongArgs, ctx.cmd))
 		return
 	}
 
@@ -33,7 +33,7 @@ func expireCommandFunc(ctx Context) {
 
 func expireatCommandFunc(ctx Context) {
 	if len(ctx.args) != 3 {
-		ctx.Conn.WriteError(fmt.Sprintf(ErrWrongArgs, string(ctx.args[0])))
+		ctx.Conn.WriteError(fmt.Sprintf(ErrWrongArgs, ctx.cmd))
 		return
 	}
 
@@ -52,7 +52,7 @@ func expireatCommandFunc(ctx Context) {
 
 func ttlCommandFunc(ctx Context) {
 	if len(ctx.args) != 2 {
-		ctx.Conn.WriteError(fmt.Sprintf(ErrWrongArgs, string(ctx.args[0])))
+		ctx.Conn.WriteError(fmt.Sprintf(ErrWrongArgs, ctx.cmd))
 		return
 	}
 
@@ -62,7 +62,7 @@ func ttlCommandFunc(ctx Context) {
 
 func persistCommandFunc(ctx Context) {
 	if len(ctx.args) != 2 {
-		ctx.Conn.WriteError(fmt.Sprintf(ErrWrongArgs, string(ctx.args[0])))
+		ctx.Conn.WriteError(fmt.Sprintf(ErrWrongArgs, ctx.cmd))
 		return
 	}
 
