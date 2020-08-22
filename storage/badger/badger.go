@@ -3,6 +3,7 @@ package badger
 import (
 	"errors"
 	"github.com/dgraph-io/badger"
+	"github.com/dgraph-io/badger/options"
 	"github.com/qichengzx/raptor/config"
 	"strconv"
 	"time"
@@ -13,7 +14,12 @@ type BadgerDB struct {
 }
 
 func Open(conf *config.Config) (*BadgerDB, error) {
-	bdb, err := badger.Open(badger.DefaultOptions(conf.Raptor.Directory))
+	opts := badger.DefaultOptions(conf.Raptor.Directory)
+	opts = opts.WithTableLoadingMode(options.MemoryMap).
+		WithNumMemtables(2).
+		WithValueThreshold(1)
+
+	bdb, err := badger.Open(opts)
 	if err != nil {
 		return nil, err
 	}
@@ -34,9 +40,14 @@ func (db *BadgerDB) Close() error {
 	return db.storage.Close()
 }
 
-func (db *BadgerDB) Set(key, value []byte) error {
+func (db *BadgerDB) Set(key, value []byte, ttl int) error {
 	return db.storage.Update(func(txn *badger.Txn) (err error) {
-		return txn.Set(key, value)
+		e := badger.NewEntry(key, value)
+		if ttl > 1 {
+			e.WithTTL(time.Duration(ttl) * time.Second)
+		}
+
+		return txn.SetEntry(e)
 	})
 }
 
@@ -58,13 +69,6 @@ func (db *BadgerDB) SetNX(key, value []byte) (bool, error) {
 	}
 
 	return false, err
-}
-
-func (db *BadgerDB) SetEX(key, value []byte, seconds int) error {
-	return db.storage.Update(func(txn *badger.Txn) error {
-		e := badger.NewEntry(key, value).WithTTL(time.Duration(seconds) * time.Second)
-		return txn.SetEntry(e)
-	})
 }
 
 func (db *BadgerDB) Get(key []byte) ([]byte, error) {

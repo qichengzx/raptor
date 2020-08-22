@@ -4,9 +4,8 @@ type DB interface {
 	Close() error
 
 	//string
-	Set(key, value []byte) error
+	Set(key, value []byte, ttl int) error
 	SetNX(key, value []byte) (bool, error)
-	SetEX(key, value []byte, seconds int) error
 	Get(key []byte) ([]byte, error)
 	GetSet(key, value []byte) ([]byte, error)
 	Strlen(key []byte) (int64, error)
