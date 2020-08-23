@@ -268,17 +268,6 @@ func (db *BadgerDB) Del(key [][]byte) error {
 	})
 }
 
-func (db *BadgerDB) Exists(key []byte) error {
-	return db.storage.View(func(txn *badger.Txn) error {
-		_, err := txn.Get(key)
-		if err != nil {
-			return err
-		}
-
-		return nil
-	})
-}
-
 func (db *BadgerDB) Rename(key, newkey []byte) error {
 	return db.storage.Update(func(txn *badger.Txn) error {
 		data, err := db.Get(key)
