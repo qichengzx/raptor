@@ -36,7 +36,7 @@ func existsCommandFunc(ctx Context) {
 		return
 	}
 
-	err := ctx.db.Exists(ctx.args[1])
+	_, err := ctx.db.Get(ctx.args[1])
 	if err != nil {
 		ctx.Conn.WriteInt(0)
 	} else {

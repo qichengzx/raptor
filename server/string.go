@@ -27,7 +27,7 @@ func setCommandFunc(ctx Context) {
 		ctx.Conn.WriteError(fmt.Sprintf(ErrWrongArgs, ctx.cmd))
 		return
 	}
-	err := ctx.db.Set(ctx.args[1], ctx.args[2])
+	err := ctx.db.Set(ctx.args[1], ctx.args[2], 0)
 	if err != nil {
 		ctx.Conn.WriteNull()
 	} else {
@@ -55,14 +55,20 @@ func setexCommandFunc(ctx Context) {
 	}
 	seconds, err := strconv.Atoi(string(ctx.args[2]))
 	if err != nil {
-		ctx.Conn.WriteInt(0)
+		ctx.Conn.WriteError(ErrValue)
 		return
 	}
-	err = ctx.db.SetEX(ctx.args[1], ctx.args[3], seconds)
+
+	if seconds < 1 {
+		ctx.Conn.WriteError(ErrExpireTime)
+		return
+	}
+
+	err = ctx.db.Set(ctx.args[1], ctx.args[2], seconds)
 	if err == nil {
-		ctx.Conn.WriteInt(RespSucc)
+		ctx.Conn.WriteString(RespOK)
 	} else {
-		ctx.Conn.WriteInt(RespErr)
+		ctx.Conn.WriteNull()
 	}
 }
 
