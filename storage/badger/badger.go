@@ -85,21 +85,6 @@ func (db *BadgerDB) GetSet(key, value []byte) ([]byte, error) {
 	return data, err
 }
 
-func (db *BadgerDB) Strlen(key []byte) (int64, error) {
-	var length int64
-	err := db.storage.View(func(txn *badger.Txn) error {
-		item, err := txn.Get(key)
-		if err != nil {
-			return err
-		}
-
-		length = item.ValueSize()
-		return nil
-	})
-
-	return length, err
-}
-
 func (db *BadgerDB) Append(key, value []byte) (int, error) {
 	var length = 0
 	err := db.storage.Update(func(txn *badger.Txn) error {
