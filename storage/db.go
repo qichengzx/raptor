@@ -12,7 +12,6 @@ type DB interface {
 	DecrBy(key []byte, by int64) (int64, error)
 	MSet(keys, values [][]byte) error
 	MSetNX(keys, values [][]byte) error
-	MGet(keys [][]byte) ([][]byte, error)
 
 	//database
 	Del(key [][]byte) error

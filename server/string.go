@@ -254,12 +254,16 @@ func mgetCommandFunc(ctx Context) {
 		ctx.Conn.WriteError(fmt.Sprintf(ErrWrongArgs, ctx.cmd))
 		return
 	}
-
+	var values [][]byte
 	var keys = ctx.args[1:]
-	values, err := ctx.db.MGet(keys)
-	if err != nil {
-		ctx.Conn.WriteError(err.Error())
-		return
+	for _, key := range keys {
+		data, err := ctx.db.Get(key)
+		if err != nil {
+			values = append(values, nil)
+			continue
+		}
+
+		values = append(values, data)
 	}
 
 	ctx.Conn.WriteArray(len(values))
