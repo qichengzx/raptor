@@ -51,26 +51,6 @@ func (db *BadgerDB) Set(key, value []byte, ttl int) error {
 	})
 }
 
-func (db *BadgerDB) SetNX(key, value []byte) (bool, error) {
-	err := db.storage.Update(func(txn *badger.Txn) error {
-		data, err := db.Get(key)
-		if data != nil {
-			return errors.New("Key exists")
-		}
-		if err == badger.ErrKeyNotFound {
-			return txn.Set(key, value)
-		}
-
-		return err
-	})
-
-	if err == nil {
-		return true, nil
-	}
-
-	return false, err
-}
-
 func (db *BadgerDB) Get(key []byte) ([]byte, error) {
 	var data []byte
 	err := db.storage.View(func(txn *badger.Txn) error {

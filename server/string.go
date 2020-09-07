@@ -40,11 +40,23 @@ func setnxCommandFunc(ctx Context) {
 		ctx.Conn.WriteError(fmt.Sprintf(ErrWrongArgs, ctx.cmd))
 		return
 	}
-	ok, err := ctx.db.SetNX(ctx.args[1], ctx.args[2])
-	if ok && err == nil {
-		ctx.Conn.WriteInt(RespSucc)
-	} else {
+
+	val, err := ctx.db.Get(ctx.args[1])
+	if err == nil && val != nil {
 		ctx.Conn.WriteInt(RespErr)
+		return
+	}
+
+	if err.Error() != "Key not found" {
+		ctx.Conn.WriteInt(RespErr)
+		return
+	}
+
+	err = ctx.db.Set(ctx.args[1], ctx.args[2], 0)
+	if err != nil {
+		ctx.Conn.WriteInt(RespErr)
+	} else {
+		ctx.Conn.WriteInt(RespSucc)
 	}
 }
 
