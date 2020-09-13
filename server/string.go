@@ -178,7 +178,7 @@ func decrCommandFunc(ctx Context) {
 		ctx.Conn.WriteError(fmt.Sprintf(ErrWrongArgs, ctx.cmd))
 		return
 	}
-	val, err := ctx.db.DecrBy(ctx.args[1], 1)
+	val, err := ctx.db.IncrBy(ctx.args[1], -1)
 	if err != nil {
 		ctx.Conn.WriteError(err.Error())
 		return
@@ -198,7 +198,7 @@ func decrByCommandFunc(ctx Context) {
 		return
 	}
 
-	val, err := ctx.db.DecrBy(ctx.args[1], by)
+	val, err := ctx.db.IncrBy(ctx.args[1], -by)
 	if err != nil {
 		ctx.Conn.WriteError(err.Error())
 		return
