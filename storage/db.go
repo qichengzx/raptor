@@ -24,3 +24,17 @@ type DB interface {
 	TTL(key []byte) (int64, error)
 	Persist(key []byte) error
 }
+
+type ObjectType byte
+
+const (
+	ObjectString = ObjectType(iota)
+)
+
+func (t ObjectType) String() string {
+	switch t {
+	case ObjectString:
+		return "string"
+	}
+	return "none"
+}
