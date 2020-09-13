@@ -8,20 +8,21 @@ import (
 )
 
 const (
-	cmdSet    = "set"
-	cmdSetNX  = "setnx"
-	cmdSetEX  = "setex"
-	cmdGet    = "get"
-	cmdGetSet = "getset"
-	cmdStrlen = "strlen"
-	cmdAppend = "append"
-	cmdIncr   = "incr"
-	cmdIncrBy = "incrby"
-	cmdDecr   = "decr"
-	cmdDecrBy = "decrby"
-	cmdMSet   = "mset"
-	cmdMSetNX = "msetnx"
-	cmdMGet   = "mget"
+	cmdSet         = "set"
+	cmdSetNX       = "setnx"
+	cmdSetEX       = "setex"
+	cmdGet         = "get"
+	cmdGetSet      = "getset"
+	cmdStrlen      = "strlen"
+	cmdAppend      = "append"
+	cmdIncr        = "incr"
+	cmdIncrBy      = "incrby"
+	cmdDecr        = "decr"
+	cmdDecrBy      = "decrby"
+	cmdIncrByFloat = "incrbyfloat"
+	cmdMSet        = "mset"
+	cmdMSetNX      = "msetnx"
+	cmdMGet        = "mget"
 )
 
 func setCommandFunc(ctx Context) {
@@ -250,6 +251,30 @@ func decrByCommandFunc(ctx Context) {
 		return
 	}
 	ctx.Conn.WriteInt64(val)
+}
+
+func incrByFloatCommandFunc(ctx Context) {
+	if len(ctx.args) != 3 {
+		ctx.Conn.WriteError(fmt.Sprintf(ErrWrongArgs, ctx.cmd))
+		return
+	}
+
+	by, err := strconv.ParseFloat(string(ctx.args[2]), 64)
+	if err != nil {
+		ctx.Conn.WriteError(ErrValue)
+		return
+	}
+
+	var buff bytes.Buffer
+	buff.WriteByte(byte(storage.ObjectString))
+	buff.Write(ctx.args[1])
+
+	val, err := ctx.db.IncrByFloat(buff.Bytes(), by)
+	if err != nil {
+		ctx.Conn.WriteError(err.Error())
+		return
+	}
+	ctx.Conn.WriteString(strconv.FormatFloat(val, 'f', 17, 64))
 }
 
 func msetCommandFunc(ctx Context) {
