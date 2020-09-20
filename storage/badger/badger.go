@@ -17,7 +17,8 @@ func Open(conf *config.Config) (*BadgerDB, error) {
 	opts := badger.DefaultOptions(conf.Raptor.Directory)
 	opts = opts.WithTableLoadingMode(options.MemoryMap).
 		WithNumMemtables(2).
-		WithValueThreshold(1)
+		WithValueThreshold(1).
+		WithCompression(options.Snappy)
 
 	bdb, err := badger.Open(opts)
 	if err != nil {
