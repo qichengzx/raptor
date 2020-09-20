@@ -1,6 +1,10 @@
 package server
 
-import "fmt"
+import (
+	"bytes"
+	"fmt"
+	"github.com/qichengzx/raptor/storage"
+)
 
 const (
 	cmdSelect   = "select"
@@ -31,17 +35,25 @@ func delCommandFunc(ctx Context) {
 }
 
 func existsCommandFunc(ctx Context) {
-	if len(ctx.args) != 2 {
+	if len(ctx.args) < 2 {
 		ctx.Conn.WriteError(fmt.Sprintf(ErrWrongArgs, ctx.cmd))
 		return
 	}
 
-	_, err := ctx.db.Get(ctx.args[1])
-	if err != nil {
-		ctx.Conn.WriteInt(0)
-	} else {
-		ctx.Conn.WriteInt(1)
+	var cnt = 0
+	var byteObjString = byte(storage.ObjectString)
+	for _, key := range ctx.args[1:] {
+		var buff bytes.Buffer
+		buff.WriteByte(byteObjString)
+		buff.Write(key)
+
+		_, err := ctx.db.Get(buff.Bytes())
+		if err == nil {
+			cnt++
+		}
 	}
+
+	ctx.Conn.WriteInt(cnt)
 }
 
 func renameCommandFunc(ctx Context) {
