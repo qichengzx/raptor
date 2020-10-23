@@ -14,6 +14,7 @@ const (
 	cmdRenameNX = "renamenx"
 	cmdFlushDB  = "flushdb"
 	cmdFlushAll = "flushall"
+	cmdType     = "type"
 )
 
 func selectCommandFunc(ctx Context) {
@@ -98,4 +99,27 @@ func flushallCommandFunc(ctx Context) {
 		//TODO
 	}
 	ctx.Conn.WriteString(RespOK)
+}
+
+func typeCommandFunc(ctx Context) {
+	if len(ctx.args) != 2 {
+		ctx.Conn.WriteError(fmt.Sprintf(ErrWrongArgs, ctx.cmd))
+		return
+	}
+
+	var buff bytes.Buffer
+	for i := 0; i < len(storage.TypeName); i++ {
+		buff.Reset()
+		buff.WriteByte(byte(i))
+		buff.Write(ctx.args[1])
+
+		_, ok := ctx.db.Get(buff.Bytes())
+		if ok != nil {
+			ctx.Conn.WriteString("none")
+			break
+		} else {
+			ctx.Conn.WriteString(storage.TypeName[storage.ObjectType(i)])
+			break
+		}
+	}
 }

@@ -29,13 +29,17 @@ type DB interface {
 type ObjectType byte
 
 const (
-	ObjectString = ObjectType(iota)
+	ObjectString ObjectType = iota
+	ObjectList
+	ObjectHash
+	ObjectSet
+	ObjectZset
 )
 
-func (t ObjectType) String() string {
-	switch t {
-	case ObjectString:
-		return "string"
-	}
-	return "none"
+var TypeName = map[ObjectType]string{
+	ObjectString: "string",
+	ObjectList:   "list",
+	ObjectHash:   "hash",
+	ObjectSet:    "set",
+	ObjectZset:   "zset",
 }

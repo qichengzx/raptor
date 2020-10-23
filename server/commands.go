@@ -41,6 +41,7 @@ var (
 		cmdRenameNX: renamenxCommandFunc,
 		cmdFlushDB:  flushdbCommandFunc,
 		cmdFlushAll: flushallCommandFunc,
+		cmdType:     typeCommandFunc,
 
 		//EXPIRE
 		cmdExpire:   expireCommandFunc,
