@@ -25,16 +25,23 @@ const (
 	cmdMGet        = "mget"
 )
 
+
+func marshal(key []byte) []byte {
+	var buff bytes.Buffer
+	buff.WriteByte(byte(storage.ObjectString))
+	buff.Write(key)
+
+	return buff.Bytes()
+}
+
 func setCommandFunc(ctx Context) {
 	if len(ctx.args) != 3 {
 		ctx.Conn.WriteError(fmt.Sprintf(ErrWrongArgs, ctx.cmd))
 		return
 	}
-	var buff bytes.Buffer
-	buff.WriteByte(byte(storage.ObjectString))
-	buff.Write(ctx.args[1])
 
-	err := ctx.db.Set(buff.Bytes(), ctx.args[2], 0)
+	var key = marshal(ctx.args[1])
+	err := ctx.db.Set(key, ctx.args[2], 0)
 	if err != nil {
 		ctx.Conn.WriteNull()
 	} else {
@@ -48,11 +55,8 @@ func setnxCommandFunc(ctx Context) {
 		return
 	}
 
-	var buff bytes.Buffer
-	buff.WriteByte(byte(storage.ObjectString))
-	buff.Write(ctx.args[1])
-
-	val, err := ctx.db.Get(buff.Bytes())
+	var key = marshal(ctx.args[1])
+	val, err := ctx.db.Get(key)
 	if err == nil && val != nil {
 		ctx.Conn.WriteInt(RespErr)
 		return
@@ -63,7 +67,7 @@ func setnxCommandFunc(ctx Context) {
 		return
 	}
 
-	err = ctx.db.Set(buff.Bytes(), ctx.args[2], 0)
+	err = ctx.db.Set(key, ctx.args[2], 0)
 	if err != nil {
 		ctx.Conn.WriteInt(RespErr)
 	} else {
@@ -87,11 +91,8 @@ func setexCommandFunc(ctx Context) {
 		return
 	}
 
-	var buff bytes.Buffer
-	buff.WriteByte(byte(storage.ObjectString))
-	buff.Write(ctx.args[1])
-
-	err = ctx.db.Set(buff.Bytes(), ctx.args[2], seconds)
+	var key = marshal(ctx.args[1])
+	err = ctx.db.Set(key, ctx.args[2], seconds)
 	if err == nil {
 		ctx.Conn.WriteString(RespOK)
 	} else {
@@ -104,11 +105,9 @@ func getCommandFunc(ctx Context) {
 		ctx.Conn.WriteError(fmt.Sprintf(ErrWrongArgs, ctx.cmd))
 		return
 	}
-	var buff bytes.Buffer
-	buff.WriteByte(byte(storage.ObjectString))
-	buff.Write(ctx.args[1])
 
-	val, ok := ctx.db.Get(buff.Bytes())
+	var key = marshal(ctx.args[1])
+	val, ok := ctx.db.Get(key)
 	if ok != nil {
 		ctx.Conn.WriteNull()
 	} else {
@@ -122,11 +121,8 @@ func getsetCommandFunc(ctx Context) {
 		return
 	}
 
-	var buff bytes.Buffer
-	buff.WriteByte(byte(storage.ObjectString))
-	buff.Write(ctx.args[1])
-
-	val, err := ctx.db.GetSet(buff.Bytes(), ctx.args[2])
+	var key = marshal(ctx.args[1])
+	val, err := ctx.db.GetSet(key, ctx.args[2])
 	if err == nil && val == nil {
 		ctx.Conn.WriteNull()
 	} else if val != nil {
@@ -142,11 +138,8 @@ func strlenCommandFunc(ctx Context) {
 		return
 	}
 
-	var buff bytes.Buffer
-	buff.WriteByte(byte(storage.ObjectString))
-	buff.Write(ctx.args[1])
-
-	val, ok := ctx.db.Get(buff.Bytes())
+	var key = marshal(ctx.args[1])
+	val, ok := ctx.db.Get(key)
 	if ok != nil {
 		ctx.Conn.WriteInt(0)
 	} else {
@@ -159,11 +152,9 @@ func appendCommandFunc(ctx Context) {
 		ctx.Conn.WriteError(fmt.Sprintf(ErrWrongArgs, ctx.cmd))
 		return
 	}
-	var buff bytes.Buffer
-	buff.WriteByte(byte(storage.ObjectString))
-	buff.Write(ctx.args[1])
 
-	length, err := ctx.db.Append(buff.Bytes(), ctx.args[2])
+	var key = marshal(ctx.args[1])
+	length, err := ctx.db.Append(key, ctx.args[2])
 	if err == nil {
 		ctx.Conn.WriteInt(length)
 	} else {
@@ -176,11 +167,9 @@ func incrCommandFunc(ctx Context) {
 		ctx.Conn.WriteError(fmt.Sprintf(ErrWrongArgs, ctx.cmd))
 		return
 	}
-	var buff bytes.Buffer
-	buff.WriteByte(byte(storage.ObjectString))
-	buff.Write(ctx.args[1])
 
-	val, err := ctx.db.IncrBy(buff.Bytes(), 1)
+	var key = marshal(ctx.args[1])
+	val, err := ctx.db.IncrBy(key, 1)
 	if err != nil {
 		ctx.Conn.WriteError(err.Error())
 		return
@@ -200,11 +189,8 @@ func incrByCommandFunc(ctx Context) {
 		return
 	}
 
-	var buff bytes.Buffer
-	buff.WriteByte(byte(storage.ObjectString))
-	buff.Write(ctx.args[1])
-
-	val, err := ctx.db.IncrBy(buff.Bytes(), by)
+	var key = marshal(ctx.args[1])
+	val, err := ctx.db.IncrBy(key, by)
 	if err != nil {
 		ctx.Conn.WriteError(err.Error())
 		return
@@ -217,11 +203,9 @@ func decrCommandFunc(ctx Context) {
 		ctx.Conn.WriteError(fmt.Sprintf(ErrWrongArgs, ctx.cmd))
 		return
 	}
-	var buff bytes.Buffer
-	buff.WriteByte(byte(storage.ObjectString))
-	buff.Write(ctx.args[1])
 
-	val, err := ctx.db.IncrBy(buff.Bytes(), -1)
+	var key = marshal(ctx.args[1])
+	val, err := ctx.db.IncrBy(key, -1)
 	if err != nil {
 		ctx.Conn.WriteError(err.Error())
 		return
@@ -241,11 +225,8 @@ func decrByCommandFunc(ctx Context) {
 		return
 	}
 
-	var buff bytes.Buffer
-	buff.WriteByte(byte(storage.ObjectString))
-	buff.Write(ctx.args[1])
-
-	val, err := ctx.db.IncrBy(buff.Bytes(), -by)
+	var key = marshal(ctx.args[1])
+	val, err := ctx.db.IncrBy(key, -by)
 	if err != nil {
 		ctx.Conn.WriteError(err.Error())
 		return
@@ -265,11 +246,8 @@ func incrByFloatCommandFunc(ctx Context) {
 		return
 	}
 
-	var buff bytes.Buffer
-	buff.WriteByte(byte(storage.ObjectString))
-	buff.Write(ctx.args[1])
-
-	val, err := ctx.db.IncrByFloat(buff.Bytes(), by)
+	var key = marshal(ctx.args[1])
+	val, err := ctx.db.IncrByFloat(key, by)
 	if err != nil {
 		ctx.Conn.WriteError(err.Error())
 		return
@@ -285,14 +263,11 @@ func msetCommandFunc(ctx Context) {
 
 	var keys, values [][]byte
 	var length = len(ctx.args[1:])
-	var byteObjString = byte(storage.ObjectString)
 
 	for i := 0; i < length; i += 2 {
-		var buff bytes.Buffer
-		buff.WriteByte(byteObjString)
-		buff.Write(ctx.args[1:][i])
+		var key = marshal(ctx.args[1:][i])
 
-		keys = append(keys, buff.Bytes())
+		keys = append(keys, key)
 		values = append(values, ctx.args[1:][i+1])
 	}
 
@@ -313,14 +288,11 @@ func msetnxCommandFunc(ctx Context) {
 
 	var keys, values [][]byte
 	var length = len(ctx.args[1:])
-	var byteObjString = byte(storage.ObjectString)
 
 	for i := 0; i < length; i += 2 {
-		var buff bytes.Buffer
-		buff.WriteByte(byteObjString)
-		buff.Write(ctx.args[1:][i])
+		var key = marshal(ctx.args[1:][i])
 
-		keys = append(keys, buff.Bytes())
+		keys = append(keys, key)
 		values = append(values, ctx.args[1:][i+1])
 	}
 
@@ -338,14 +310,10 @@ func mgetCommandFunc(ctx Context) {
 		return
 	}
 	var values [][]byte
-	var byteObjString = byte(storage.ObjectString)
 
 	for _, key := range ctx.args[1:] {
-		var buff bytes.Buffer
-		buff.WriteByte(byteObjString)
-		buff.Write(key)
-
-		data, err := ctx.db.Get(buff.Bytes())
+		key = marshal(key)
+		data, err := ctx.db.Get(key)
 		if err != nil {
 			values = append(values, nil)
 			continue
