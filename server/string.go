@@ -26,9 +26,9 @@ const (
 )
 
 
-func marshal(key []byte) []byte {
+func marshal(key []byte, t storage.ObjectType) []byte {
 	var buff bytes.Buffer
-	buff.WriteByte(byte(storage.ObjectString))
+	buff.WriteByte(byte(t))
 	buff.Write(key)
 
 	return buff.Bytes()
@@ -40,7 +40,7 @@ func setCommandFunc(ctx Context) {
 		return
 	}
 
-	var key = marshal(ctx.args[1])
+	var key = marshal(ctx.args[1], storage.ObjectString)
 	err := ctx.db.Set(key, ctx.args[2], 0)
 	if err != nil {
 		ctx.Conn.WriteNull()
@@ -55,7 +55,7 @@ func setnxCommandFunc(ctx Context) {
 		return
 	}
 
-	var key = marshal(ctx.args[1])
+	var key = marshal(ctx.args[1], storage.ObjectString)
 	val, err := ctx.db.Get(key)
 	if err == nil && val != nil {
 		ctx.Conn.WriteInt(RespErr)
@@ -91,7 +91,7 @@ func setexCommandFunc(ctx Context) {
 		return
 	}
 
-	var key = marshal(ctx.args[1])
+	var key = marshal(ctx.args[1], storage.ObjectString)
 	err = ctx.db.Set(key, ctx.args[2], seconds)
 	if err == nil {
 		ctx.Conn.WriteString(RespOK)
@@ -106,7 +106,7 @@ func getCommandFunc(ctx Context) {
 		return
 	}
 
-	var key = marshal(ctx.args[1])
+	var key = marshal(ctx.args[1], storage.ObjectString)
 	val, ok := ctx.db.Get(key)
 	if ok != nil {
 		ctx.Conn.WriteNull()
@@ -121,7 +121,7 @@ func getsetCommandFunc(ctx Context) {
 		return
 	}
 
-	var key = marshal(ctx.args[1])
+	var key = marshal(ctx.args[1], storage.ObjectString)
 	val, err := ctx.db.GetSet(key, ctx.args[2])
 	if err == nil && val == nil {
 		ctx.Conn.WriteNull()
@@ -138,7 +138,7 @@ func strlenCommandFunc(ctx Context) {
 		return
 	}
 
-	var key = marshal(ctx.args[1])
+	var key = marshal(ctx.args[1], storage.ObjectString)
 	val, ok := ctx.db.Get(key)
 	if ok != nil {
 		ctx.Conn.WriteInt(0)
@@ -153,7 +153,7 @@ func appendCommandFunc(ctx Context) {
 		return
 	}
 
-	var key = marshal(ctx.args[1])
+	var key = marshal(ctx.args[1], storage.ObjectString)
 	length, err := ctx.db.Append(key, ctx.args[2])
 	if err == nil {
 		ctx.Conn.WriteInt(length)
@@ -168,7 +168,7 @@ func incrCommandFunc(ctx Context) {
 		return
 	}
 
-	var key = marshal(ctx.args[1])
+	var key = marshal(ctx.args[1], storage.ObjectString)
 	val, err := ctx.db.IncrBy(key, 1)
 	if err != nil {
 		ctx.Conn.WriteError(err.Error())
@@ -189,7 +189,7 @@ func incrByCommandFunc(ctx Context) {
 		return
 	}
 
-	var key = marshal(ctx.args[1])
+	var key = marshal(ctx.args[1], storage.ObjectString)
 	val, err := ctx.db.IncrBy(key, by)
 	if err != nil {
 		ctx.Conn.WriteError(err.Error())
@@ -204,7 +204,7 @@ func decrCommandFunc(ctx Context) {
 		return
 	}
 
-	var key = marshal(ctx.args[1])
+	var key = marshal(ctx.args[1], storage.ObjectString)
 	val, err := ctx.db.IncrBy(key, -1)
 	if err != nil {
 		ctx.Conn.WriteError(err.Error())
@@ -225,7 +225,7 @@ func decrByCommandFunc(ctx Context) {
 		return
 	}
 
-	var key = marshal(ctx.args[1])
+	var key = marshal(ctx.args[1], storage.ObjectString)
 	val, err := ctx.db.IncrBy(key, -by)
 	if err != nil {
 		ctx.Conn.WriteError(err.Error())
@@ -246,7 +246,7 @@ func incrByFloatCommandFunc(ctx Context) {
 		return
 	}
 
-	var key = marshal(ctx.args[1])
+	var key = marshal(ctx.args[1], storage.ObjectString)
 	val, err := ctx.db.IncrByFloat(key, by)
 	if err != nil {
 		ctx.Conn.WriteError(err.Error())
@@ -265,7 +265,7 @@ func msetCommandFunc(ctx Context) {
 	var length = len(ctx.args[1:])
 
 	for i := 0; i < length; i += 2 {
-		var key = marshal(ctx.args[1:][i])
+		var key = marshal(ctx.args[1:][i], storage.ObjectString)
 
 		keys = append(keys, key)
 		values = append(values, ctx.args[1:][i+1])
@@ -290,7 +290,7 @@ func msetnxCommandFunc(ctx Context) {
 	var length = len(ctx.args[1:])
 
 	for i := 0; i < length; i += 2 {
-		var key = marshal(ctx.args[1:][i])
+		var key = marshal(ctx.args[1:][i], storage.ObjectString)
 
 		keys = append(keys, key)
 		values = append(values, ctx.args[1:][i+1])
@@ -312,7 +312,7 @@ func mgetCommandFunc(ctx Context) {
 	var values [][]byte
 
 	for _, key := range ctx.args[1:] {
-		key = marshal(key)
+		key = marshal(key, storage.ObjectString)
 		data, err := ctx.db.Get(key)
 		if err != nil {
 			values = append(values, nil)
