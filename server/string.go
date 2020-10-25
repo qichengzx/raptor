@@ -25,10 +25,11 @@ const (
 	cmdMGet        = "mget"
 )
 
+var typeString = byte(storage.ObjectString)
 
-func marshal(key []byte, t storage.ObjectType) []byte {
+func marshalKVKey(key []byte) []byte {
 	var buff bytes.Buffer
-	buff.WriteByte(byte(t))
+	buff.WriteByte(typeString)
 	buff.Write(key)
 
 	return buff.Bytes()
@@ -40,7 +41,7 @@ func setCommandFunc(ctx Context) {
 		return
 	}
 
-	var key = marshal(ctx.args[1], storage.ObjectString)
+	var key = marshalKVKey(ctx.args[1])
 	err := ctx.db.Set(key, ctx.args[2], 0)
 	if err != nil {
 		ctx.Conn.WriteNull()
@@ -55,7 +56,7 @@ func setnxCommandFunc(ctx Context) {
 		return
 	}
 
-	var key = marshal(ctx.args[1], storage.ObjectString)
+	var key = marshalKVKey(ctx.args[1])
 	val, err := ctx.db.Get(key)
 	if err == nil && val != nil {
 		ctx.Conn.WriteInt(RespErr)
@@ -91,7 +92,7 @@ func setexCommandFunc(ctx Context) {
 		return
 	}
 
-	var key = marshal(ctx.args[1], storage.ObjectString)
+	var key = marshalKVKey(ctx.args[1])
 	err = ctx.db.Set(key, ctx.args[2], seconds)
 	if err == nil {
 		ctx.Conn.WriteString(RespOK)
@@ -106,7 +107,7 @@ func getCommandFunc(ctx Context) {
 		return
 	}
 
-	var key = marshal(ctx.args[1], storage.ObjectString)
+	var key = marshalKVKey(ctx.args[1])
 	val, ok := ctx.db.Get(key)
 	if ok != nil {
 		ctx.Conn.WriteNull()
@@ -121,7 +122,7 @@ func getsetCommandFunc(ctx Context) {
 		return
 	}
 
-	var key = marshal(ctx.args[1], storage.ObjectString)
+	var key = marshalKVKey(ctx.args[1])
 	val, err := ctx.db.GetSet(key, ctx.args[2])
 	if err == nil && val == nil {
 		ctx.Conn.WriteNull()
@@ -138,7 +139,7 @@ func strlenCommandFunc(ctx Context) {
 		return
 	}
 
-	var key = marshal(ctx.args[1], storage.ObjectString)
+	var key = marshalKVKey(ctx.args[1])
 	val, ok := ctx.db.Get(key)
 	if ok != nil {
 		ctx.Conn.WriteInt(0)
@@ -153,7 +154,7 @@ func appendCommandFunc(ctx Context) {
 		return
 	}
 
-	var key = marshal(ctx.args[1], storage.ObjectString)
+	var key = marshalKVKey(ctx.args[1])
 	length, err := ctx.db.Append(key, ctx.args[2])
 	if err == nil {
 		ctx.Conn.WriteInt(length)
@@ -168,7 +169,7 @@ func incrCommandFunc(ctx Context) {
 		return
 	}
 
-	var key = marshal(ctx.args[1], storage.ObjectString)
+	var key = marshalKVKey(ctx.args[1])
 	val, err := ctx.db.IncrBy(key, 1)
 	if err != nil {
 		ctx.Conn.WriteError(err.Error())
@@ -189,7 +190,7 @@ func incrByCommandFunc(ctx Context) {
 		return
 	}
 
-	var key = marshal(ctx.args[1], storage.ObjectString)
+	var key = marshalKVKey(ctx.args[1])
 	val, err := ctx.db.IncrBy(key, by)
 	if err != nil {
 		ctx.Conn.WriteError(err.Error())
@@ -204,7 +205,7 @@ func decrCommandFunc(ctx Context) {
 		return
 	}
 
-	var key = marshal(ctx.args[1], storage.ObjectString)
+	var key = marshalKVKey(ctx.args[1])
 	val, err := ctx.db.IncrBy(key, -1)
 	if err != nil {
 		ctx.Conn.WriteError(err.Error())
@@ -225,7 +226,7 @@ func decrByCommandFunc(ctx Context) {
 		return
 	}
 
-	var key = marshal(ctx.args[1], storage.ObjectString)
+	var key = marshalKVKey(ctx.args[1])
 	val, err := ctx.db.IncrBy(key, -by)
 	if err != nil {
 		ctx.Conn.WriteError(err.Error())
@@ -246,7 +247,7 @@ func incrByFloatCommandFunc(ctx Context) {
 		return
 	}
 
-	var key = marshal(ctx.args[1], storage.ObjectString)
+	var key = marshalKVKey(ctx.args[1])
 	val, err := ctx.db.IncrByFloat(key, by)
 	if err != nil {
 		ctx.Conn.WriteError(err.Error())
@@ -265,7 +266,7 @@ func msetCommandFunc(ctx Context) {
 	var length = len(ctx.args[1:])
 
 	for i := 0; i < length; i += 2 {
-		var key = marshal(ctx.args[1:][i], storage.ObjectString)
+		var key = marshalKVKey(ctx.args[1:][i])
 
 		keys = append(keys, key)
 		values = append(values, ctx.args[1:][i+1])
@@ -290,7 +291,7 @@ func msetnxCommandFunc(ctx Context) {
 	var length = len(ctx.args[1:])
 
 	for i := 0; i < length; i += 2 {
-		var key = marshal(ctx.args[1:][i], storage.ObjectString)
+		var key = marshalKVKey(ctx.args[1:][i])
 
 		keys = append(keys, key)
 		values = append(values, ctx.args[1:][i+1])
@@ -312,7 +313,7 @@ func mgetCommandFunc(ctx Context) {
 	var values [][]byte
 
 	for _, key := range ctx.args[1:] {
-		key = marshal(key, storage.ObjectString)
+		key = marshalKVKey(key)
 		data, err := ctx.db.Get(key)
 		if err != nil {
 			values = append(values, nil)
