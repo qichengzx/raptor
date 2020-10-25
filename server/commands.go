@@ -33,6 +33,10 @@ var (
 		cmdMSetNX:      msetnxCommandFunc,
 		cmdMGet:        mgetCommandFunc,
 
+		//SET
+		cmdSAdd:      saddCommandFunc,
+		cmdSismember: sismemberCommandFunc,
+
 		//DATABASE
 		cmdSelect:   selectCommandFunc,
 		cmdDel:      delCommandFunc,
