@@ -12,63 +12,68 @@ const (
 	cmdSismember = "sismember"
 )
 
+const memberDefault = "1"
+
 var typeSet = byte(storage.ObjectSet)
+
+func marshalSetKey(key []byte) []byte {
+	var buff bytes.Buffer
+	buff.WriteByte(typeSet)
+	buff.Write(key)
+
+	return buff.Bytes()
+}
 
 func saddCommandFunc(ctx Context) {
 	if len(ctx.args) < 3 {
 		ctx.Conn.WriteError(fmt.Sprintf(ErrWrongArgs, ctx.cmd))
 		return
 	}
-	var buff bytes.Buffer
-	buff.WriteByte(typeSet)
-	buff.Write(ctx.args[1])
-	var metaKey = buff.Bytes()
-	buff.Reset()
+
+	var key = ctx.args[1]
+	var keyLen = uint32(len(key))
+	var keySize = make([]byte, 4)
+	var metaKey = marshalSetKey(key)
+	var setSize uint32 = 0
 
 	metaValue, err := ctx.db.Get(metaKey)
-	var setSize int64 = 0
 	if err == nil && metaValue != nil {
-		valueBuff := bytes.NewBuffer(metaValue)
-		binary.Read(valueBuff, binary.BigEndian, &setSize)
+		setSize = binary.BigEndian.Uint32(metaValue[:4])
 	}
 
-	var cnt int64 = 0
-	var dataBuff bytes.Buffer
-	memberSizeBuff := bytes.NewBuffer([]byte{})
-
+	binary.BigEndian.PutUint32(keySize, keyLen)
+	var cnt uint32 = 0
+	var memDefault = []byte(memberDefault)
 	for _, member := range ctx.args[2:] {
-		memberSizeBuff.Reset()
-		binary.Write(memberSizeBuff, binary.BigEndian, len(member))
-		memberSize := memberSizeBuff.Bytes()
+		memBuff := bytes.NewBuffer([]byte{})
+		memBuff.WriteByte(typeSet)
+		memBuff.Write(keySize)
+		memBuff.Write(key)
+		memBuff.Write(member)
 
-		dataBuff.WriteByte(typeSet)
-		dataBuff.Write(memberSize)
-		dataBuff.Write(ctx.args[1])
-		dataBuff.Write(member)
-		var dataKey = dataBuff.Bytes()
-		dataBuff.Reset()
-
-		v, err := ctx.db.Get(dataKey)
-		if err == nil && v != nil {
+		v, err := ctx.db.Get(memBuff.Bytes())
+		if err == nil && string(v) == memberDefault {
 			continue
 		}
 
-		err = ctx.db.Set(dataKey, []byte{0}, 0)
+		err = ctx.db.Set(memBuff.Bytes(), memDefault, 0)
 		if err == nil {
 			cnt++
 		}
 	}
-
 	setSize += cnt
-	sizeBuff := bytes.NewBuffer([]byte{})
-	binary.Write(sizeBuff, binary.BigEndian, setSize)
-	err = ctx.db.Set(metaKey, sizeBuff.Bytes(), 0)
+
+	var metaSize = make([]byte, 4)
+	binary.BigEndian.PutUint32(metaSize, setSize)
+	metaValue = metaSize
+	err = ctx.db.Set(metaKey, metaValue, 0)
 	if err != nil {
 		ctx.Conn.WriteInt(0)
 		return
 	}
 
-	ctx.Conn.WriteInt64(cnt)
+	ctx.Conn.WriteInt64(int64(cnt))
+	return
 }
 
 func sismemberCommandFunc(ctx Context) {
@@ -76,19 +81,22 @@ func sismemberCommandFunc(ctx Context) {
 		ctx.Conn.WriteError(fmt.Sprintf(ErrWrongArgs, ctx.cmd))
 		return
 	}
-	var dataBuff bytes.Buffer
-	memberSizeBuff := bytes.NewBuffer([]byte{})
-	binary.Write(memberSizeBuff, binary.BigEndian, len(ctx.args[2]))
-	memberSize := memberSizeBuff.Bytes()
 
-	dataBuff.WriteByte(typeSet)
-	dataBuff.Write(memberSize)
-	dataBuff.Write(ctx.args[1])
-	dataBuff.Write(ctx.args[2])
+	var key = ctx.args[1]
+	var keyLen = uint32(len(key))
+	var keySize = make([]byte, 4)
 
-	v, err := ctx.db.Get(dataBuff.Bytes())
+	binary.BigEndian.PutUint32(keySize, keyLen)
+	var member = ctx.args[2]
 
-	if err == nil && v != nil {
+	memBuff := bytes.NewBuffer([]byte{})
+	memBuff.WriteByte(typeSet)
+	memBuff.Write(keySize)
+	memBuff.Write(key)
+	memBuff.Write(member)
+
+	v, err := ctx.db.Get(memBuff.Bytes())
+	if err == nil && string(v) == memberDefault {
 		ctx.Conn.WriteInt(1)
 		return
 	}

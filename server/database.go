@@ -101,25 +101,28 @@ func flushallCommandFunc(ctx Context) {
 	ctx.Conn.WriteString(RespOK)
 }
 
+var typeMap = map[byte]func(key []byte) []byte{
+	typeString: marshalKVKey,
+	typeSet:    marshalSetKey,
+}
+
 func typeCommandFunc(ctx Context) {
 	if len(ctx.args) != 2 {
 		ctx.Conn.WriteError(fmt.Sprintf(ErrWrongArgs, ctx.cmd))
 		return
 	}
 
-	var buff bytes.Buffer
 	for i := 0; i < len(storage.TypeName); i++ {
-		buff.Reset()
-		buff.WriteByte(byte(i))
-		buff.Write(ctx.args[1])
-
-		_, ok := ctx.db.Get(buff.Bytes())
-		if ok != nil {
-			ctx.Conn.WriteString("none")
-			break
-		} else {
-			ctx.Conn.WriteString(storage.TypeName[storage.ObjectType(i)])
-			break
+		if _, ok := typeMap[byte(i)]; ok {
+			var key = typeMap[byte(i)](ctx.args[1])
+			_, err := ctx.db.Get(key)
+			if err == nil {
+				ctx.Conn.WriteString(storage.TypeName[storage.ObjectType(i)])
+				break
+			}
 		}
 	}
+
+	ctx.Conn.WriteString(ErrTypeNone)
+	return
 }

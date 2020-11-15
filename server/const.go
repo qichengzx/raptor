@@ -6,6 +6,9 @@ const (
 	RespSucc = 1
 	RespErr  = 0
 
+	ErrTypeNone    = "none"
+	ErrKeyNotExist = "Key not found"
+
 	ErrNoAuth     = "NOAUTH Authentication required"
 	ErrWrongArgs  = "ERR wrong number of arguments for '%s' command"
 	ErrPassword   = "ERR invalid password"
@@ -14,4 +17,5 @@ const (
 	ErrKeyExist   = "ERR key is exist"
 	ErrSyntax     = "ERR syntax error"
 	ErrExpireTime = "ERR invalid expire time in setex"
+	ErrWrongType  = "WRONGTYPE Operation against a key holding the wrong kind of value"
 )
