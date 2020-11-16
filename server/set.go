@@ -11,6 +11,7 @@ const (
 	cmdSAdd      = "sadd"
 	cmdSismember = "sismember"
 	cmdSRem      = "srem"
+	cmdSCard     = "scard"
 )
 
 const memberDefault = "1"
@@ -158,5 +159,24 @@ func sremCommandFunc(ctx Context) {
 	}
 
 	ctx.Conn.WriteInt(lenToDel)
+	return
+}
+
+func scardCommandFunc(ctx Context) {
+	if len(ctx.args) != 2 {
+		ctx.Conn.WriteError(fmt.Sprintf(ErrWrongArgs, ctx.cmd))
+		return
+	}
+
+	var key = ctx.args[1]
+	var metaKey = marshalSetKey(key)
+	var setSize uint32 = 0
+
+	metaValue, _ := ctx.db.Get(metaKey)
+	if metaValue != nil {
+		setSize = binary.BigEndian.Uint32(metaValue[:4])
+	}
+
+	ctx.Conn.WriteInt(int(setSize))
 	return
 }
