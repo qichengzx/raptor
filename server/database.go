@@ -1,9 +1,7 @@
 package server
 
 import (
-	"bytes"
 	"fmt"
-	"github.com/qichengzx/raptor/storage"
 )
 
 const (
@@ -42,13 +40,8 @@ func existsCommandFunc(ctx Context) {
 	}
 
 	var cnt = 0
-	var byteObjString = byte(storage.ObjectString)
 	for _, key := range ctx.args[1:] {
-		var buff bytes.Buffer
-		buff.WriteByte(byteObjString)
-		buff.Write(key)
-
-		_, err := ctx.db.Get(buff.Bytes())
+		_, err := ctx.db.Get(key)
 		if err == nil {
 			cnt++
 		}
