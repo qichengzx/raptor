@@ -138,6 +138,14 @@ func sremCommandFunc(ctx Context) {
 		setSize -= uint32(lenToDel)
 	}
 
+	if setSize == 0 {
+		var del = make([][]byte, 1)
+		del = append(del, key)
+		ctx.db.Del(del)
+		ctx.Conn.WriteInt(lenToDel)
+		return
+	}
+	
 	var metaSize = make([]byte, 4)
 	binary.BigEndian.PutUint32(metaSize, setSize)
 	metaValue = metaSize
