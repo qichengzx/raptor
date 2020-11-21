@@ -1,9 +1,7 @@
 package server
 
 import (
-	"bytes"
 	"fmt"
-	"github.com/qichengzx/raptor/storage"
 	"strconv"
 )
 
@@ -25,15 +23,7 @@ const (
 	cmdMGet        = "mget"
 )
 
-var typeString = byte(storage.ObjectString)
-
-func marshalKVKey(key []byte) []byte {
-	var buff bytes.Buffer
-	buff.WriteByte(typeString)
-	buff.Write(key)
-
-	return buff.Bytes()
-}
+var typeString = []byte("s")
 
 func setCommandFunc(ctx Context) {
 	if len(ctx.args) != 3 {
@@ -41,8 +31,7 @@ func setCommandFunc(ctx Context) {
 		return
 	}
 
-	var key = marshalKVKey(ctx.args[1])
-	err := ctx.db.Set(key, ctx.args[2], 0)
+	err := ctx.db.Set(ctx.args[1], append(typeString, ctx.args[2]...), 0)
 	if err != nil {
 		ctx.Conn.WriteNull()
 	} else {
@@ -56,8 +45,7 @@ func setnxCommandFunc(ctx Context) {
 		return
 	}
 
-	var key = marshalKVKey(ctx.args[1])
-	val, err := ctx.db.Get(key)
+	val, err := ctx.db.Get(ctx.args[1])
 	if err == nil && val != nil {
 		ctx.Conn.WriteInt(RespErr)
 		return
@@ -68,7 +56,7 @@ func setnxCommandFunc(ctx Context) {
 		return
 	}
 
-	err = ctx.db.Set(key, ctx.args[2], 0)
+	err = ctx.db.Set(ctx.args[1], append(typeString, ctx.args[2]...), 0)
 	if err != nil {
 		ctx.Conn.WriteInt(RespErr)
 	} else {
@@ -92,8 +80,7 @@ func setexCommandFunc(ctx Context) {
 		return
 	}
 
-	var key = marshalKVKey(ctx.args[1])
-	err = ctx.db.Set(key, ctx.args[2], seconds)
+	err = ctx.db.Set(ctx.args[1], append(typeString, ctx.args[2]...), seconds)
 	if err == nil {
 		ctx.Conn.WriteString(RespOK)
 	} else {
@@ -107,12 +94,11 @@ func getCommandFunc(ctx Context) {
 		return
 	}
 
-	var key = marshalKVKey(ctx.args[1])
-	val, ok := ctx.db.Get(key)
+	val, ok := ctx.db.Get(ctx.args[1])
 	if ok != nil {
 		ctx.Conn.WriteNull()
 	} else {
-		ctx.Conn.WriteBulk(val)
+		ctx.Conn.WriteBulk(val[1:])
 	}
 }
 
@@ -122,12 +108,11 @@ func getsetCommandFunc(ctx Context) {
 		return
 	}
 
-	var key = marshalKVKey(ctx.args[1])
-	val, err := ctx.db.GetSet(key, ctx.args[2])
+	val, err := ctx.db.GetSet(ctx.args[1], append(typeString, ctx.args[2]...))
 	if err == nil && val == nil {
 		ctx.Conn.WriteNull()
 	} else if val != nil {
-		ctx.Conn.WriteBulk(val)
+		ctx.Conn.WriteBulk(val[1:])
 	} else {
 		ctx.Conn.WriteNull()
 	}
@@ -139,12 +124,11 @@ func strlenCommandFunc(ctx Context) {
 		return
 	}
 
-	var key = marshalKVKey(ctx.args[1])
-	val, ok := ctx.db.Get(key)
+	val, ok := ctx.db.Get(ctx.args[1])
 	if ok != nil {
 		ctx.Conn.WriteInt(0)
 	} else {
-		ctx.Conn.WriteInt(len(string(val)))
+		ctx.Conn.WriteInt(len(string(val[1:])))
 	}
 }
 
@@ -154,8 +138,7 @@ func appendCommandFunc(ctx Context) {
 		return
 	}
 
-	var key = marshalKVKey(ctx.args[1])
-	length, err := ctx.db.Append(key, ctx.args[2])
+	length, err := ctx.db.Append(ctx.args[1], ctx.args[2])
 	if err == nil {
 		ctx.Conn.WriteInt(length)
 	} else {
@@ -169,8 +152,7 @@ func incrCommandFunc(ctx Context) {
 		return
 	}
 
-	var key = marshalKVKey(ctx.args[1])
-	val, err := ctx.db.IncrBy(key, 1)
+	val, err := ctx.db.IncrBy(ctx.args[1], 1)
 	if err != nil {
 		ctx.Conn.WriteError(err.Error())
 		return
@@ -190,8 +172,7 @@ func incrByCommandFunc(ctx Context) {
 		return
 	}
 
-	var key = marshalKVKey(ctx.args[1])
-	val, err := ctx.db.IncrBy(key, by)
+	val, err := ctx.db.IncrBy(ctx.args[1], by)
 	if err != nil {
 		ctx.Conn.WriteError(err.Error())
 		return
@@ -205,8 +186,7 @@ func decrCommandFunc(ctx Context) {
 		return
 	}
 
-	var key = marshalKVKey(ctx.args[1])
-	val, err := ctx.db.IncrBy(key, -1)
+	val, err := ctx.db.IncrBy(ctx.args[1], -1)
 	if err != nil {
 		ctx.Conn.WriteError(err.Error())
 		return
@@ -226,8 +206,7 @@ func decrByCommandFunc(ctx Context) {
 		return
 	}
 
-	var key = marshalKVKey(ctx.args[1])
-	val, err := ctx.db.IncrBy(key, -by)
+	val, err := ctx.db.IncrBy(ctx.args[1], -by)
 	if err != nil {
 		ctx.Conn.WriteError(err.Error())
 		return
@@ -247,8 +226,7 @@ func incrByFloatCommandFunc(ctx Context) {
 		return
 	}
 
-	var key = marshalKVKey(ctx.args[1])
-	val, err := ctx.db.IncrByFloat(key, by)
+	val, err := ctx.db.IncrByFloat(ctx.args[1], by)
 	if err != nil {
 		ctx.Conn.WriteError(err.Error())
 		return
@@ -266,10 +244,8 @@ func msetCommandFunc(ctx Context) {
 	var length = len(ctx.args[1:])
 
 	for i := 0; i < length; i += 2 {
-		var key = marshalKVKey(ctx.args[1:][i])
-
-		keys = append(keys, key)
-		values = append(values, ctx.args[1:][i+1])
+		keys = append(keys, ctx.args[1:][i])
+		values = append(values, append(typeString, ctx.args[1:][i+1]...))
 	}
 
 	err := ctx.db.MSet(keys, values)
@@ -291,10 +267,8 @@ func msetnxCommandFunc(ctx Context) {
 	var length = len(ctx.args[1:])
 
 	for i := 0; i < length; i += 2 {
-		var key = marshalKVKey(ctx.args[1:][i])
-
-		keys = append(keys, key)
-		values = append(values, ctx.args[1:][i+1])
+		keys = append(keys, ctx.args[1:][i])
+		values = append(values, append(typeString, ctx.args[1:][i+1]...))
 	}
 
 	err := ctx.db.MSetNX(keys, values)
@@ -313,14 +287,13 @@ func mgetCommandFunc(ctx Context) {
 	var values [][]byte
 
 	for _, key := range ctx.args[1:] {
-		key = marshalKVKey(key)
 		data, err := ctx.db.Get(key)
 		if err != nil {
 			values = append(values, nil)
 			continue
 		}
 
-		values = append(values, data)
+		values = append(values, data[1:])
 	}
 
 	ctx.Conn.WriteArray(len(values))
