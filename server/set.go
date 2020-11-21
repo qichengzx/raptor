@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/binary"
 	"fmt"
-	"github.com/qichengzx/raptor/storage"
 )
 
 const (
@@ -16,15 +15,7 @@ const (
 
 const memberDefault = "1"
 
-var typeSet = byte(storage.ObjectSet)
-
-func marshalSetKey(key []byte) []byte {
-	var buff bytes.Buffer
-	buff.WriteByte(typeSet)
-	buff.Write(key)
-
-	return buff.Bytes()
-}
+var typeSet = []byte("s")
 
 func saddCommandFunc(ctx Context) {
 	if len(ctx.args) < 3 {
@@ -35,10 +26,9 @@ func saddCommandFunc(ctx Context) {
 	var key = ctx.args[1]
 	var keyLen = uint32(len(key))
 	var keySize = make([]byte, 4)
-	var metaKey = marshalSetKey(key)
 	var setSize uint32 = 0
 
-	metaValue, err := ctx.db.Get(metaKey)
+	metaValue, err := ctx.db.Get(key)
 	if err == nil && metaValue != nil {
 		setSize = binary.BigEndian.Uint32(metaValue[:4])
 	}
@@ -48,7 +38,7 @@ func saddCommandFunc(ctx Context) {
 	var memDefault = []byte(memberDefault)
 	for _, member := range ctx.args[2:] {
 		memBuff := bytes.NewBuffer([]byte{})
-		memBuff.WriteByte(typeSet)
+		memBuff.Write(typeSet)
 		memBuff.Write(keySize)
 		memBuff.Write(key)
 		memBuff.Write(member)
@@ -68,7 +58,7 @@ func saddCommandFunc(ctx Context) {
 	var metaSize = make([]byte, 4)
 	binary.BigEndian.PutUint32(metaSize, setSize)
 	metaValue = metaSize
-	err = ctx.db.Set(metaKey, metaValue, 0)
+	err = ctx.db.Set(key, metaValue, 0)
 	if err != nil {
 		ctx.Conn.WriteInt(0)
 		return
@@ -92,7 +82,7 @@ func sismemberCommandFunc(ctx Context) {
 	var member = ctx.args[2]
 
 	memBuff := bytes.NewBuffer([]byte{})
-	memBuff.WriteByte(typeSet)
+	memBuff.Write(typeSet)
 	memBuff.Write(keySize)
 	memBuff.Write(key)
 	memBuff.Write(member)
@@ -115,10 +105,9 @@ func sremCommandFunc(ctx Context) {
 	var key = ctx.args[1]
 	var keyLen = uint32(len(key))
 	var keySize = make([]byte, 4)
-	var metaKey = marshalSetKey(key)
 	var setSize uint32 = 0
 
-	metaValue, err := ctx.db.Get(metaKey)
+	metaValue, err := ctx.db.Get(key)
 	if err != nil && err.Error() == "Key not found" {
 		ctx.Conn.WriteError(ErrWrongType)
 		return
@@ -131,7 +120,7 @@ func sremCommandFunc(ctx Context) {
 	var memberToDel = [][]byte{}
 	for _, member := range ctx.args[2:] {
 		memBuff := bytes.NewBuffer([]byte{})
-		memBuff.WriteByte(typeSet)
+		memBuff.Write(typeSet)
 		memBuff.Write(keySize)
 		memBuff.Write(key)
 		memBuff.Write(member)
@@ -152,7 +141,7 @@ func sremCommandFunc(ctx Context) {
 	var metaSize = make([]byte, 4)
 	binary.BigEndian.PutUint32(metaSize, setSize)
 	metaValue = metaSize
-	err = ctx.db.Set(metaKey, metaValue, 0)
+	err = ctx.db.Set(key, metaValue, 0)
 	if err != nil {
 		ctx.Conn.WriteInt(0)
 		return
@@ -168,11 +157,8 @@ func scardCommandFunc(ctx Context) {
 		return
 	}
 
-	var key = ctx.args[1]
-	var metaKey = marshalSetKey(key)
+	metaValue, _ := ctx.db.Get(ctx.args[1])
 	var setSize uint32 = 0
-
-	metaValue, _ := ctx.db.Get(metaKey)
 	if metaValue != nil {
 		setSize = binary.BigEndian.Uint32(metaValue[:4])
 	}
