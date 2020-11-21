@@ -152,12 +152,25 @@ func incrCommandFunc(ctx Context) {
 		return
 	}
 
-	val, err := ctx.db.IncrBy(ctx.args[1], 1)
+	val, err := ctx.db.Get(ctx.args[1])
+	if err != nil {
+		val = []byte("0")
+	}
+
+	valInt, err := strconv.ParseInt(string(val[1:]), 10, 64)
+	if err != nil {
+		ctx.Conn.WriteError(ErrValue)
+		return
+	}
+	valInt += 1
+	valStr := strconv.FormatInt(valInt, 10)
+
+	err = ctx.db.Set(ctx.args[1], append(typeString, []byte(valStr)...), 0)
 	if err != nil {
 		ctx.Conn.WriteError(err.Error())
 		return
 	}
-	ctx.Conn.WriteInt64(val)
+	ctx.Conn.WriteInt64(valInt)
 }
 
 func incrByCommandFunc(ctx Context) {
@@ -172,12 +185,25 @@ func incrByCommandFunc(ctx Context) {
 		return
 	}
 
-	val, err := ctx.db.IncrBy(ctx.args[1], by)
+	val, err := ctx.db.Get(ctx.args[1])
+	if err != nil {
+		val = []byte("0")
+	}
+
+	valInt, err := strconv.ParseInt(string(val[1:]), 10, 64)
+	if err != nil {
+		ctx.Conn.WriteError(ErrValue)
+		return
+	}
+	valInt += by
+	valStr := strconv.FormatInt(valInt, 10)
+
+	err = ctx.db.Set(ctx.args[1], append(typeString, []byte(valStr)...), 0)
 	if err != nil {
 		ctx.Conn.WriteError(err.Error())
 		return
 	}
-	ctx.Conn.WriteInt64(val)
+	ctx.Conn.WriteInt64(valInt)
 }
 
 func decrCommandFunc(ctx Context) {
@@ -186,12 +212,25 @@ func decrCommandFunc(ctx Context) {
 		return
 	}
 
-	val, err := ctx.db.IncrBy(ctx.args[1], -1)
+	val, err := ctx.db.Get(ctx.args[1])
+	if err != nil {
+		val = []byte("0")
+	}
+
+	valInt, err := strconv.ParseInt(string(val[1:]), 10, 64)
+	if err != nil {
+		ctx.Conn.WriteError(ErrValue)
+		return
+	}
+	valInt -= 1
+	valStr := strconv.FormatInt(valInt, 10)
+
+	err = ctx.db.Set(ctx.args[1], append(typeString, []byte(valStr)...), 0)
 	if err != nil {
 		ctx.Conn.WriteError(err.Error())
 		return
 	}
-	ctx.Conn.WriteInt64(val)
+	ctx.Conn.WriteInt64(valInt)
 }
 
 func decrByCommandFunc(ctx Context) {
@@ -206,12 +245,24 @@ func decrByCommandFunc(ctx Context) {
 		return
 	}
 
-	val, err := ctx.db.IncrBy(ctx.args[1], -by)
+	val, err := ctx.db.Get(ctx.args[1])
+	if err != nil {
+		val = []byte("0")
+	}
+
+	valInt, err := strconv.ParseInt(string(val[1:]), 10, 64)
+	if err != nil {
+		ctx.Conn.WriteError(ErrValue)
+	}
+	valInt -= by
+	valStr := strconv.FormatInt(valInt, 10)
+
+	err = ctx.db.Set(ctx.args[1], append(typeString, []byte(valStr)...), 0)
 	if err != nil {
 		ctx.Conn.WriteError(err.Error())
 		return
 	}
-	ctx.Conn.WriteInt64(val)
+	ctx.Conn.WriteInt64(valInt)
 }
 
 func incrByFloatCommandFunc(ctx Context) {
@@ -226,12 +277,25 @@ func incrByFloatCommandFunc(ctx Context) {
 		return
 	}
 
-	val, err := ctx.db.IncrByFloat(ctx.args[1], by)
+	val, err := ctx.db.Get(ctx.args[1])
+	if err != nil {
+		val = []byte("0")
+	}
+
+	valFloat, err := strconv.ParseFloat(string(val[1:]), 64)
+	if err != nil {
+		ctx.Conn.WriteError(ErrValue)
+		return
+	}
+	valFloat += by
+
+	valStr := strconv.FormatFloat(valFloat, 'e', -1, 64)
+	err = ctx.db.Set(ctx.args[1], append(typeString, []byte(valStr)...), 0)
 	if err != nil {
 		ctx.Conn.WriteError(err.Error())
 		return
 	}
-	ctx.Conn.WriteString(strconv.FormatFloat(val, 'f', 17, 64))
+	ctx.Conn.WriteString(strconv.FormatFloat(valFloat, 'f', 17, 64))
 }
 
 func msetCommandFunc(ctx Context) {

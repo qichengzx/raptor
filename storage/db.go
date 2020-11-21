@@ -8,8 +8,6 @@ type DB interface {
 	Get(key []byte) ([]byte, error)
 	GetSet(key, value []byte) ([]byte, error)
 	Append(key, value []byte) (int, error)
-	IncrBy(key []byte, by int64) (int64, error)
-	IncrByFloat(key []byte, by float64) (float64, error)
 	MSet(keys, values [][]byte) error
 	MSetNX(keys, values [][]byte) error
 
