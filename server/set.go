@@ -15,7 +15,7 @@ const (
 
 const memberDefault = "1"
 
-var typeSet = []byte("s")
+var typeSet = []byte("S")
 
 func saddCommandFunc(ctx Context) {
 	if len(ctx.args) < 3 {
@@ -58,7 +58,7 @@ func saddCommandFunc(ctx Context) {
 	var metaSize = make([]byte, 4)
 	binary.BigEndian.PutUint32(metaSize, setSize)
 	metaValue = metaSize
-	err = ctx.db.Set(key, metaValue, 0)
+	err = ctx.db.Set(key, append(typeSet, metaValue...), 0)
 	if err != nil {
 		ctx.Conn.WriteInt(0)
 		return
@@ -145,11 +145,11 @@ func sremCommandFunc(ctx Context) {
 		ctx.Conn.WriteInt(lenToDel)
 		return
 	}
-	
+
 	var metaSize = make([]byte, 4)
 	binary.BigEndian.PutUint32(metaSize, setSize)
 	metaValue = metaSize
-	err = ctx.db.Set(key, metaValue, 0)
+	err = ctx.db.Set(key, append(typeSet, metaValue...), 0)
 	if err != nil {
 		ctx.Conn.WriteInt(0)
 		return
@@ -168,7 +168,7 @@ func scardCommandFunc(ctx Context) {
 	metaValue, _ := ctx.db.Get(ctx.args[1])
 	var setSize uint32 = 0
 	if metaValue != nil {
-		setSize = binary.BigEndian.Uint32(metaValue[:4])
+		setSize = binary.BigEndian.Uint32(metaValue[1:5])
 	}
 
 	ctx.Conn.WriteInt(int(setSize))
