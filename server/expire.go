@@ -44,7 +44,7 @@ func pexpireCommandFunc(ctx Context) {
 		return
 	}
 
-	err = ctx.db.Expire(ctx.args[1], millisecond / 1000)
+	err = ctx.db.Expire(ctx.args[1], millisecond/1000)
 	if err != nil {
 		ctx.Conn.WriteInt(0)
 	} else {

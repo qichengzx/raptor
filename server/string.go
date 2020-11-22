@@ -9,6 +9,7 @@ const (
 	cmdSet         = "set"
 	cmdSetNX       = "setnx"
 	cmdSetEX       = "setex"
+	cmdPSetEX      = "psetex"
 	cmdGet         = "get"
 	cmdGetSet      = "getset"
 	cmdStrlen      = "strlen"
@@ -74,6 +75,32 @@ func setexCommandFunc(ctx Context) {
 		ctx.Conn.WriteError(ErrValue)
 		return
 	}
+
+	if seconds < 1 {
+		ctx.Conn.WriteError(ErrExpireTime)
+		return
+	}
+
+	err = ctx.db.Set(ctx.args[1], append(typeString, ctx.args[2]...), seconds)
+	if err == nil {
+		ctx.Conn.WriteString(RespOK)
+	} else {
+		ctx.Conn.WriteNull()
+	}
+}
+
+func psetexCommandFunc(ctx Context) {
+	if len(ctx.args) != 4 {
+		ctx.Conn.WriteError(fmt.Sprintf(ErrWrongArgs, ctx.cmd))
+		return
+	}
+
+	millisecond, err := strconv.Atoi(string(ctx.args[2]))
+	if err != nil {
+		ctx.Conn.WriteInt(0)
+		return
+	}
+	var seconds = millisecond / 1000
 
 	if seconds < 1 {
 		ctx.Conn.WriteError(ErrExpireTime)
