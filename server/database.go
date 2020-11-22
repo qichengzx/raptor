@@ -2,6 +2,7 @@ package server
 
 import (
 	"fmt"
+	"github.com/qichengzx/raptor/storage"
 )
 
 const (
@@ -100,9 +101,15 @@ func typeCommandFunc(ctx Context) {
 		return
 	}
 
-	//TODO
-	_, err := ctx.db.Get(ctx.args[1])
-	if err == nil {
+	data, err := ctx.db.Get(ctx.args[1])
+	if err != nil {
+		ctx.Conn.WriteString(ErrTypeNone)
+		return
+	}
+
+	valType := data[:1]
+	if t, ok := storage.TypeName[string(valType)]; ok {
+		ctx.Conn.WriteString(t)
 		return
 	}
 

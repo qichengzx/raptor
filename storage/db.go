@@ -24,17 +24,17 @@ type DB interface {
 	Persist(key []byte) error
 }
 
-type ObjectType byte
+type ObjectType []byte
 
-const (
-	ObjectString ObjectType = iota
-	ObjectList
-	ObjectHash
-	ObjectSet
-	ObjectZset
+var (
+	ObjectString = "s"
+	ObjectList = "l"
+	ObjectHash = "h"
+	ObjectSet = "S"
+	ObjectZset = "z"
 )
 
-var TypeName = map[ObjectType]string{
+var TypeName = map[string]string{
 	ObjectString: "string",
 	ObjectList:   "list",
 	ObjectHash:   "hash",
