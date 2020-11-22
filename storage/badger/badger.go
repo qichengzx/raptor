@@ -85,30 +85,6 @@ func (db *BadgerDB) GetSet(key, value []byte) ([]byte, error) {
 	return data, err
 }
 
-func (db *BadgerDB) Append(key, value []byte) (int, error) {
-	var length = 0
-	err := db.storage.Update(func(txn *badger.Txn) error {
-		val, err := db.Get(key)
-		if err == nil || err == badger.ErrKeyNotFound {
-			val = append(val, value...)
-
-			err := txn.Set(key, val)
-			if err != nil {
-				return err
-			}
-			length = len(string(val))
-			return nil
-		}
-		return nil
-	})
-
-	if err == nil {
-		return length, nil
-	}
-
-	return 0, err
-}
-
 func (db *BadgerDB) MSet(keys, values [][]byte) error {
 	var err error
 	writer := db.storage.NewWriteBatch()

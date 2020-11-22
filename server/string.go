@@ -138,9 +138,15 @@ func appendCommandFunc(ctx Context) {
 		return
 	}
 
-	length, err := ctx.db.Append(ctx.args[1], ctx.args[2])
+	val, err := ctx.db.Get(ctx.args[1])
+	if err != nil {
+		val = append(val, typeString...)
+	}
+
+	val = append(val, ctx.args[2]...)
+	err = ctx.db.Set(ctx.args[1], val, 0)
 	if err == nil {
-		ctx.Conn.WriteInt(length)
+		ctx.Conn.WriteInt(len(val[1:]))
 	} else {
 		ctx.Conn.WriteInt(0)
 	}
