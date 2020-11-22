@@ -51,6 +51,7 @@ var (
 
 		//EXPIRE
 		cmdExpire:   expireCommandFunc,
+		cmdPExpire:  pexpireCommandFunc,
 		cmdExpireAt: expireatCommandFunc,
 		cmdTTL:      ttlCommandFunc,
 		cmdPersist:  persistCommandFunc,

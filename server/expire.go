@@ -7,6 +7,7 @@ import (
 
 const (
 	cmdExpire   = "expire"
+	cmdPExpire  = "pexpire"
 	cmdExpireAt = "expireat"
 	cmdTTL      = "ttl"
 	cmdPersist  = "persist"
@@ -24,6 +25,26 @@ func expireCommandFunc(ctx Context) {
 		return
 	}
 	err = ctx.db.Expire(ctx.args[1], seconds)
+	if err != nil {
+		ctx.Conn.WriteInt(0)
+	} else {
+		ctx.Conn.WriteInt(1)
+	}
+}
+
+func pexpireCommandFunc(ctx Context) {
+	if len(ctx.args) != 3 {
+		ctx.Conn.WriteError(fmt.Sprintf(ErrWrongArgs, ctx.cmd))
+		return
+	}
+
+	millisecond, err := strconv.Atoi(string(ctx.args[2]))
+	if err != nil {
+		ctx.Conn.WriteInt(0)
+		return
+	}
+
+	err = ctx.db.Expire(ctx.args[1], millisecond / 1000)
 	if err != nil {
 		ctx.Conn.WriteInt(0)
 	} else {
