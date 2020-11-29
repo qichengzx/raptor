@@ -160,6 +160,65 @@ func (db *BadgerDB) RenameNX(key, newkey []byte) error {
 	})
 }
 
+type ScannerOptions struct {
+	Offset      string
+	Prefix      []byte
+	FetchValues bool
+	Handler     func(k, v []byte)
+}
+
+func (db *BadgerDB) Scan(scanOpts ScannerOptions) error {
+	err := db.storage.View(func(txn *badger.Txn) error {
+		opts := badger.DefaultIteratorOptions
+		opts.PrefetchValues = scanOpts.FetchValues
+
+		it := txn.NewIterator(opts)
+		defer it.Close()
+
+		start := func(it *badger.Iterator) {
+			if scanOpts.Offset == "" {
+				it.Rewind()
+			} else {
+				it.Seek([]byte(scanOpts.Offset))
+				if it.Valid() {
+					it.Next()
+				}
+			}
+		}
+
+		valid := func(it *badger.Iterator) bool {
+			if !it.Valid() {
+				return false
+			}
+
+			if scanOpts.Prefix != nil && !it.ValidForPrefix(scanOpts.Prefix) {
+				return false
+			}
+
+			return true
+		}
+
+		for start(it); valid(it); it.Next() {
+			var k, v []byte
+
+			item := it.Item()
+			k = item.KeyCopy(nil)
+
+			if scanOpts.FetchValues {
+				v, _ = item.ValueCopy(nil)
+			}
+
+			if scanOpts.Handler != nil {
+				scanOpts.Handler(k, v)
+			}
+		}
+
+		return nil
+	})
+
+	return err
+}
+
 func (db *BadgerDB) FlushDB() error {
 	return db.storage.DropAll()
 }

@@ -1,5 +1,7 @@
 package storage
 
+import "github.com/qichengzx/raptor/storage/badger"
+
 type DB interface {
 	Close() error
 
@@ -14,6 +16,7 @@ type DB interface {
 	Del(key [][]byte) error
 	Rename(key, newkey []byte) error
 	RenameNX(key, newkey []byte) error
+	Scan(opts badger.ScannerOptions) error
 	FlushDB() error
 
 	//expire
@@ -27,10 +30,10 @@ type ObjectType []byte
 
 var (
 	ObjectString = "s"
-	ObjectList = "l"
-	ObjectHash = "h"
-	ObjectSet = "S"
-	ObjectZset = "z"
+	ObjectList   = "l"
+	ObjectHash   = "h"
+	ObjectSet    = "S"
+	ObjectZset   = "z"
 )
 
 var TypeName = map[string]string{

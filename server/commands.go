@@ -39,6 +39,7 @@ var (
 		cmdSismember: sismemberCommandFunc,
 		cmdSRem:      sremCommandFunc,
 		cmdSCard:     scardCommandFunc,
+		cmdSmembers:  smembersCommandFunc,
 
 		//DATABASE
 		cmdSelect:   selectCommandFunc,

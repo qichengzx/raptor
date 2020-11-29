@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/binary"
 	"fmt"
+	"github.com/qichengzx/raptor/storage/badger"
 )
 
 const (
@@ -11,6 +12,7 @@ const (
 	cmdSismember = "sismember"
 	cmdSRem      = "srem"
 	cmdSCard     = "scard"
+	cmdSmembers  = "smembers"
 )
 
 const memberDefault = "1"
@@ -173,4 +175,47 @@ func scardCommandFunc(ctx Context) {
 
 	ctx.Conn.WriteInt(int(setSize))
 	return
+}
+
+func smembersCommandFunc(ctx Context) {
+	if len(ctx.args) != 2 {
+		ctx.Conn.WriteError(fmt.Sprintf(ErrWrongArgs, ctx.cmd))
+		return
+	}
+
+	var key = ctx.args[1]
+	var keyLen = uint32(len(key))
+	var keySize = make([]byte, 4)
+
+	_, err := ctx.db.Get(key)
+	if err != nil && err.Error() == "Key not found" {
+		ctx.Conn.WriteError(ErrEmpty)
+		return
+	}
+
+	binary.BigEndian.PutUint32(keySize, keyLen)
+
+	prefixBuff := bytes.NewBuffer([]byte{})
+	prefixBuff.Write(typeSet)
+	prefixBuff.Write(keySize)
+	prefixBuff.Write(key)
+
+	var members [][]byte
+	var memberPos = uint32(len(typeSet)) + uint32(len(keySize)) + keyLen
+	var scanFunc = func(k, v []byte) {
+		members = append(members, k[memberPos:])
+	}
+
+	scanOpts := badger.ScannerOptions{
+		Prefix:      prefixBuff.Bytes(),
+		FetchValues: false,
+		Handler:     scanFunc,
+	}
+
+	ctx.db.Scan(scanOpts)
+
+	ctx.Conn.WriteArray(len(members))
+	for _, member := range members {
+		ctx.Conn.WriteBulk(member)
+	}
 }

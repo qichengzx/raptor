@@ -16,6 +16,7 @@ const (
 	ErrNoKey      = "ERR no such key"
 	ErrKeyExist   = "ERR key is exist"
 	ErrSyntax     = "ERR syntax error"
+	ErrEmpty      = "empty list or set"
 	ErrExpireTime = "ERR invalid expire time in setex"
 	ErrWrongType  = "WRONGTYPE Operation against a key holding the wrong kind of value"
 )
