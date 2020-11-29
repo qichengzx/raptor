@@ -32,7 +32,7 @@ func saddCommandFunc(ctx Context) {
 
 	metaValue, err := ctx.db.Get(key)
 	if err == nil && metaValue != nil {
-		setSize = binary.BigEndian.Uint32(metaValue[:4])
+		setSize = binary.BigEndian.Uint32(metaValue[1:5])
 	}
 
 	binary.BigEndian.PutUint32(keySize, keyLen)
@@ -115,7 +115,7 @@ func sremCommandFunc(ctx Context) {
 		return
 	}
 	if err == nil && metaValue != nil {
-		setSize = binary.BigEndian.Uint32(metaValue[:4])
+		setSize = binary.BigEndian.Uint32(metaValue[1:5])
 	}
 
 	binary.BigEndian.PutUint32(keySize, keyLen)
