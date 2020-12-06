@@ -70,21 +70,6 @@ func (db *BadgerDB) Get(key []byte) ([]byte, error) {
 	return data, err
 }
 
-func (db *BadgerDB) GetSet(key, value []byte) ([]byte, error) {
-	var data []byte
-	err := db.storage.Update(func(txn *badger.Txn) error {
-		v, err := db.Get(key)
-		if err == badger.ErrKeyNotFound {
-			return nil
-		}
-
-		data = v
-		return txn.Set(key, value)
-	})
-
-	return data, err
-}
-
 func (db *BadgerDB) MSet(keys, values [][]byte) error {
 	var err error
 	writer := db.storage.NewWriteBatch()

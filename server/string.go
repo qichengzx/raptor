@@ -135,13 +135,17 @@ func getsetCommandFunc(ctx Context) {
 		return
 	}
 
-	val, err := ctx.db.GetSet(ctx.args[1], append(typeString, ctx.args[2]...))
-	if err == nil && val == nil {
+	val, err := ctx.db.Get(ctx.args[1])
+	if err != nil && err.Error() != "Key not found" {
 		ctx.Conn.WriteNull()
-	} else if val != nil {
-		ctx.Conn.WriteBulk(val[1:])
+		return
+	}
+
+	err = ctx.db.Set(ctx.args[1], append(typeString, ctx.args[2]...), 0)
+	if err != nil {
+		ctx.Conn.WriteNull()
 	} else {
-		ctx.Conn.WriteNull()
+		ctx.Conn.WriteBulk(val[1:])
 	}
 }
 

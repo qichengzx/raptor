@@ -8,7 +8,6 @@ type DB interface {
 	//string
 	Set(key, value []byte, ttl int) error
 	Get(key []byte) ([]byte, error)
-	GetSet(key, value []byte) ([]byte, error)
 	MSet(keys, values [][]byte) error
 	MSetNX(keys, values [][]byte) error
 
