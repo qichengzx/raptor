@@ -52,11 +52,6 @@ func setnxCommandFunc(ctx Context) {
 		return
 	}
 
-	if err.Error() != "Key not found" {
-		ctx.Conn.WriteInt(RespErr)
-		return
-	}
-
 	err = ctx.db.Set(ctx.args[1], append(typeString, ctx.args[2]...), 0)
 	if err != nil {
 		ctx.Conn.WriteInt(RespErr)
@@ -170,7 +165,7 @@ func appendCommandFunc(ctx Context) {
 	}
 
 	val, err := ctx.db.Get(ctx.args[1])
-	if err != nil {
+	if err != nil && val == nil {
 		val = append(val, typeString...)
 	}
 
