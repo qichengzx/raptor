@@ -35,12 +35,13 @@ var (
 		cmdMGet:        mgetCommandFunc,
 
 		//SET
-		cmdSAdd:      saddCommandFunc,
-		cmdSismember: sismemberCommandFunc,
-		cmdSPop:      spopCommandFunc,
-		cmdSRem:      sremCommandFunc,
-		cmdSCard:     scardCommandFunc,
-		cmdSmembers:  smembersCommandFunc,
+		cmdSAdd:        saddCommandFunc,
+		cmdSismember:   sismemberCommandFunc,
+		cmdSPop:        spopCommandFunc,
+		cmdSrandmember: srandmemberCommandFunc,
+		cmdSRem:        sremCommandFunc,
+		cmdSCard:       scardCommandFunc,
+		cmdSmembers:    smembersCommandFunc,
 
 		//DATABASE
 		cmdSelect:   selectCommandFunc,

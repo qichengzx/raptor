@@ -9,12 +9,13 @@ import (
 )
 
 const (
-	cmdSAdd      = "sadd"
-	cmdSismember = "sismember"
-	cmdSPop      = "spop"
-	cmdSRem      = "srem"
-	cmdSCard     = "scard"
-	cmdSmembers  = "smembers"
+	cmdSAdd        = "sadd"
+	cmdSismember   = "sismember"
+	cmdSPop        = "spop"
+	cmdSrandmember = "srandmember"
+	cmdSRem        = "srem"
+	cmdSCard       = "scard"
+	cmdSmembers    = "smembers"
 )
 
 const (
@@ -158,6 +159,45 @@ func spopCommandFunc(ctx Context) {
 			ctx.Conn.WriteInt(0)
 			return
 		}
+	}
+
+	ctx.Conn.WriteArray(len(members))
+	for _, member := range members {
+		ctx.Conn.WriteBulk(member[memberPos:])
+	}
+}
+
+func srandmemberCommandFunc(ctx Context) {
+	if len(ctx.args) != 2 && len(ctx.args) != 3 {
+		ctx.Conn.WriteError(fmt.Sprintf(ErrWrongArgs, ctx.cmd))
+		return
+	}
+
+	var key = ctx.args[1]
+	_, err := ctx.db.Get(key)
+	if err != nil && err.Error() == ErrKeyNotExist {
+		ctx.Conn.WriteNull()
+		return
+	}
+
+	var cnt int64 = 1
+	if len(ctx.args) == 3 {
+		cnt, err = strconv.ParseInt(string(ctx.args[2]), 10, 64)
+		if err != nil {
+			ctx.Conn.WriteError(ErrValue)
+			return
+		}
+	}
+
+	var memberPos = typeSetSize + typeSetKeySize + uint32(len(key))
+	members := typeSetScan(ctx, key, cnt)
+	if cnt == 1 {
+		if len(members) == 1 {
+			ctx.Conn.WriteBulk(members[0][memberPos:])
+		} else {
+			ctx.Conn.WriteNull()
+		}
+		return
 	}
 
 	ctx.Conn.WriteArray(len(members))
