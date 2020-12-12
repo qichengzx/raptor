@@ -19,11 +19,11 @@ const (
 
 const (
 	typeSetMemberDefault = "1"
-	typeSetKeySize = 4
+	typeSetKeySize       = 4
 )
 
 var (
-	typeSet = []byte("S")
+	typeSet     = []byte("S")
 	typeSetSize = uint32(len(typeSet))
 )
 
@@ -128,38 +128,19 @@ func spopCommandFunc(ctx Context) {
 	var keySize = make([]byte, typeSetKeySize)
 	binary.BigEndian.PutUint32(keySize, keyLen)
 
-	prefixBuff := bytes.NewBuffer([]byte{})
-	prefixBuff.Write(typeSet)
-	prefixBuff.Write(keySize)
-	prefixBuff.Write(key)
-
-	var members [][]byte
-	var memberToDel [][]byte
-	var memberPos = typeSetSize + typeSetKeySize + keyLen
-	var scanFunc = func(k, v []byte) {
-		memberToDel = append(memberToDel, k)
-		members = append(members, k[memberPos:])
-	}
-
-	scanOpts := badger.ScannerOptions{
-		Prefix:      prefixBuff.Bytes(),
-		FetchValues: false,
-		Handler:     scanFunc,
-		Count:       1,
-	}
-
+	var cnt int64 = 1
 	if len(ctx.args) == 3 {
-		cnt, err := strconv.ParseInt(string(ctx.args[2]), 10, 64)
+		cnt, err = strconv.ParseInt(string(ctx.args[2]), 10, 64)
 		if err != nil {
 			ctx.Conn.WriteError(ErrValue)
 			return
 		}
-		scanOpts.Count = cnt
 	}
-	ctx.db.Scan(scanOpts)
-
-	var lenToDel = len(memberToDel)
+	var memberPos = typeSetSize + typeSetKeySize + keyLen
+	members := typeSetScan(ctx, key, cnt)
+	var lenToDel = len(members)
 	if lenToDel > 0 {
+		memberToDel := members
 		setSize -= uint32(lenToDel)
 		if setSize == 0 {
 			memberToDel = append(memberToDel, key)
@@ -181,7 +162,7 @@ func spopCommandFunc(ctx Context) {
 
 	ctx.Conn.WriteArray(len(members))
 	for _, member := range members {
-		ctx.Conn.WriteBulk(member)
+		ctx.Conn.WriteBulk(member[memberPos:])
 	}
 }
 
@@ -271,15 +252,28 @@ func smembersCommandFunc(ctx Context) {
 	}
 
 	var key = ctx.args[1]
-	var keyLen = uint32(len(key))
-	var keySize = make([]byte, typeSetKeySize)
-
 	_, err := ctx.db.Get(key)
 	if err != nil && err.Error() == ErrKeyNotExist {
 		ctx.Conn.WriteError(ErrEmpty)
 		return
 	}
 
+	var memberPos = typeSetSize + typeSetKeySize + uint32(len(key))
+	members := typeSetScan(ctx, key, 0)
+	ctx.Conn.WriteArray(len(members))
+	for _, member := range members {
+		ctx.Conn.WriteBulk(member[memberPos:])
+	}
+}
+
+func typeSetScan(ctx Context, key []byte, cnt int64) [][]byte {
+	var members [][]byte
+	var scanFunc = func(k, v []byte) {
+		members = append(members, k)
+	}
+
+	var keySize = make([]byte, typeSetKeySize)
+	var keyLen = uint32(len(key))
 	binary.BigEndian.PutUint32(keySize, keyLen)
 
 	prefixBuff := bytes.NewBuffer([]byte{})
@@ -287,22 +281,13 @@ func smembersCommandFunc(ctx Context) {
 	prefixBuff.Write(keySize)
 	prefixBuff.Write(key)
 
-	var members [][]byte
-	var memberPos = typeSetSize + typeSetKeySize + keyLen
-	var scanFunc = func(k, v []byte) {
-		members = append(members, k[memberPos:])
-	}
-
 	scanOpts := badger.ScannerOptions{
 		Prefix:      prefixBuff.Bytes(),
 		FetchValues: false,
 		Handler:     scanFunc,
+		Count:       cnt,
 	}
-
 	ctx.db.Scan(scanOpts)
 
-	ctx.Conn.WriteArray(len(members))
-	for _, member := range members {
-		ctx.Conn.WriteBulk(member)
-	}
+	return members
 }
