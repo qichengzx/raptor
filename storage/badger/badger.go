@@ -147,6 +147,7 @@ func (db *BadgerDB) RenameNX(key, newkey []byte) error {
 
 type ScannerOptions struct {
 	Offset      string
+	Count       int64
 	Prefix      []byte
 	FetchValues bool
 	Handler     func(k, v []byte)
@@ -183,6 +184,7 @@ func (db *BadgerDB) Scan(scanOpts ScannerOptions) error {
 			return true
 		}
 
+		var cnt int64 = 0
 		for start(it); valid(it); it.Next() {
 			var k, v []byte
 
@@ -195,6 +197,11 @@ func (db *BadgerDB) Scan(scanOpts ScannerOptions) error {
 
 			if scanOpts.Handler != nil {
 				scanOpts.Handler(k, v)
+			}
+
+			cnt++
+			if scanOpts.Count != 0 && cnt >= scanOpts.Count {
+				break
 			}
 		}
 

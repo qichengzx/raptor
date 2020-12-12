@@ -37,6 +37,7 @@ var (
 		//SET
 		cmdSAdd:      saddCommandFunc,
 		cmdSismember: sismemberCommandFunc,
+		cmdSPop:      spopCommandFunc,
 		cmdSRem:      sremCommandFunc,
 		cmdSCard:     scardCommandFunc,
 		cmdSmembers:  smembersCommandFunc,

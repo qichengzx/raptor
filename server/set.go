@@ -5,11 +5,13 @@ import (
 	"encoding/binary"
 	"fmt"
 	"github.com/qichengzx/raptor/storage/badger"
+	"strconv"
 )
 
 const (
 	cmdSAdd      = "sadd"
 	cmdSismember = "sismember"
+	cmdSPop      = "spop"
 	cmdSRem      = "srem"
 	cmdSCard     = "scard"
 	cmdSmembers  = "smembers"
@@ -98,6 +100,85 @@ func sismemberCommandFunc(ctx Context) {
 	ctx.Conn.WriteInt(0)
 }
 
+func spopCommandFunc(ctx Context) {
+	if len(ctx.args) != 2 || len(ctx.args) != 3 {
+		ctx.Conn.WriteError(fmt.Sprintf(ErrWrongArgs, ctx.cmd))
+		return
+	}
+
+	var key = ctx.args[1]
+	var keyLen = uint32(len(key))
+	var keySize = make([]byte, 4)
+	var setSize uint32 = 0
+
+	metaValue, err := ctx.db.Get(key)
+	if err != nil && err.Error() == ErrKeyNotExist {
+		ctx.Conn.WriteNull()
+		return
+	}
+	if err == nil && metaValue != nil {
+		setSize = binary.BigEndian.Uint32(metaValue[1:5])
+	}
+
+	binary.BigEndian.PutUint32(keySize, keyLen)
+
+	prefixBuff := bytes.NewBuffer([]byte{})
+	prefixBuff.Write(typeSet)
+	prefixBuff.Write(keySize)
+	prefixBuff.Write(key)
+
+	var members [][]byte
+	var memberToDel [][]byte
+	var memberPos = uint32(len(typeSet)) + uint32(len(keySize)) + keyLen
+	var scanFunc = func(k, v []byte) {
+		memberToDel = append(memberToDel, k)
+		members = append(members, k[memberPos:])
+	}
+
+	scanOpts := badger.ScannerOptions{
+		Prefix:      prefixBuff.Bytes(),
+		FetchValues: false,
+		Handler:     scanFunc,
+		Count: 1,
+	}
+
+	if len(ctx.args) == 3 {
+		cnt, err := strconv.ParseInt(string(ctx.args[2]), 10, 64)
+		if err != nil {
+			ctx.Conn.WriteError(ErrValue)
+			return
+		}
+		scanOpts.Count = cnt
+	}
+	ctx.db.Scan(scanOpts)
+
+	var lenToDel = len(memberToDel)
+	if lenToDel > 0 {
+		ctx.db.Del(memberToDel)
+		setSize -= uint32(lenToDel)
+	}
+
+	if setSize == 0 {
+		var del [][]byte
+		del = append(del, key)
+		ctx.db.Del(del)
+	} else {
+		var metaSize = make([]byte, 4)
+		binary.BigEndian.PutUint32(metaSize, setSize)
+		metaValue = metaSize
+		err = ctx.db.Set(key, append(typeSet, metaValue...), 0)
+		if err != nil {
+			ctx.Conn.WriteInt(0)
+			return
+		}
+	}
+
+	ctx.Conn.WriteArray(len(members))
+	for _, member := range members {
+		ctx.Conn.WriteBulk(member)
+	}
+}
+
 func sremCommandFunc(ctx Context) {
 	if len(ctx.args) < 3 {
 		ctx.Conn.WriteError(fmt.Sprintf(ErrWrongArgs, ctx.cmd))
@@ -110,7 +191,7 @@ func sremCommandFunc(ctx Context) {
 	var setSize uint32 = 0
 
 	metaValue, err := ctx.db.Get(key)
-	if err != nil && err.Error() == "Key not found" {
+	if err != nil && err.Error() == ErrKeyNotExist {
 		ctx.Conn.WriteError(ErrWrongType)
 		return
 	}
@@ -119,7 +200,7 @@ func sremCommandFunc(ctx Context) {
 	}
 
 	binary.BigEndian.PutUint32(keySize, keyLen)
-	var memberToDel = [][]byte{}
+	var memberToDel [][]byte
 	for _, member := range ctx.args[2:] {
 		memBuff := bytes.NewBuffer([]byte{})
 		memBuff.Write(typeSet)
@@ -188,7 +269,7 @@ func smembersCommandFunc(ctx Context) {
 	var keySize = make([]byte, 4)
 
 	_, err := ctx.db.Get(key)
-	if err != nil && err.Error() == "Key not found" {
+	if err != nil && err.Error() == ErrKeyNotExist {
 		ctx.Conn.WriteError(ErrEmpty)
 		return
 	}
