@@ -47,8 +47,8 @@ func saddCommandFunc(ctx Context) {
 		memBuff.Write(key)
 		memBuff.Write(member)
 
-		v, err := ctx.db.Get(memBuff.Bytes())
-		if err == nil && string(v) == memberDefault {
+		_, err := ctx.db.Get(memBuff.Bytes())
+		if err == nil {
 			continue
 		}
 
@@ -101,25 +101,25 @@ func sismemberCommandFunc(ctx Context) {
 }
 
 func spopCommandFunc(ctx Context) {
-	if len(ctx.args) != 2 || len(ctx.args) != 3 {
+	if len(ctx.args) != 2 && len(ctx.args) != 3 {
 		ctx.Conn.WriteError(fmt.Sprintf(ErrWrongArgs, ctx.cmd))
 		return
 	}
 
 	var key = ctx.args[1]
-	var keyLen = uint32(len(key))
-	var keySize = make([]byte, 4)
-	var setSize uint32 = 0
-
 	metaValue, err := ctx.db.Get(key)
 	if err != nil && err.Error() == ErrKeyNotExist {
 		ctx.Conn.WriteNull()
 		return
 	}
+
+	var setSize uint32 = 0
 	if err == nil && metaValue != nil {
 		setSize = binary.BigEndian.Uint32(metaValue[1:5])
 	}
 
+	var keyLen = uint32(len(key))
+	var keySize = make([]byte, 4)
 	binary.BigEndian.PutUint32(keySize, keyLen)
 
 	prefixBuff := bytes.NewBuffer([]byte{})
@@ -139,7 +139,7 @@ func spopCommandFunc(ctx Context) {
 		Prefix:      prefixBuff.Bytes(),
 		FetchValues: false,
 		Handler:     scanFunc,
-		Count: 1,
+		Count:       1,
 	}
 
 	if len(ctx.args) == 3 {
@@ -154,15 +154,15 @@ func spopCommandFunc(ctx Context) {
 
 	var lenToDel = len(memberToDel)
 	if lenToDel > 0 {
-		ctx.db.Del(memberToDel)
 		setSize -= uint32(lenToDel)
+		if setSize == 0 {
+			memberToDel = append(memberToDel, key)
+		}
+
+		ctx.db.Del(memberToDel)
 	}
 
-	if setSize == 0 {
-		var del [][]byte
-		del = append(del, key)
-		ctx.db.Del(del)
-	} else {
+	if setSize > 0 {
 		var metaSize = make([]byte, 4)
 		binary.BigEndian.PutUint32(metaSize, setSize)
 		metaValue = metaSize
@@ -186,19 +186,19 @@ func sremCommandFunc(ctx Context) {
 	}
 
 	var key = ctx.args[1]
-	var keyLen = uint32(len(key))
-	var keySize = make([]byte, 4)
-	var setSize uint32 = 0
-
 	metaValue, err := ctx.db.Get(key)
 	if err != nil && err.Error() == ErrKeyNotExist {
 		ctx.Conn.WriteError(ErrWrongType)
 		return
 	}
+
+	var setSize uint32 = 0
 	if err == nil && metaValue != nil {
 		setSize = binary.BigEndian.Uint32(metaValue[1:5])
 	}
 
+	var keyLen = uint32(len(key))
+	var keySize = make([]byte, 4)
 	binary.BigEndian.PutUint32(keySize, keyLen)
 	var memberToDel [][]byte
 	for _, member := range ctx.args[2:] {
@@ -217,16 +217,16 @@ func sremCommandFunc(ctx Context) {
 
 	var lenToDel = len(memberToDel)
 	if lenToDel > 0 {
-		err = ctx.db.Del(memberToDel)
 		setSize -= uint32(lenToDel)
-	}
+		if setSize == 0 {
+			memberToDel = append(memberToDel, key)
+		}
 
-	if setSize == 0 {
-		var del = make([][]byte, 1)
-		del = append(del, key)
-		ctx.db.Del(del)
-		ctx.Conn.WriteInt(lenToDel)
-		return
+		ctx.db.Del(memberToDel)
+		if setSize == 0 {
+			ctx.Conn.WriteInt(lenToDel)
+			return
+		}
 	}
 
 	var metaSize = make([]byte, 4)
