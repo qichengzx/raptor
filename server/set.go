@@ -17,9 +17,15 @@ const (
 	cmdSmembers  = "smembers"
 )
 
-const memberDefault = "1"
+const (
+	memberDefault = "1"
+	setKeySize = 4
+)
 
-var typeSet = []byte("S")
+var (
+	typeSet = []byte("S")
+	typeSetSize = uint32(len(typeSet))
+)
 
 func saddCommandFunc(ctx Context) {
 	if len(ctx.args) < 3 {
@@ -29,7 +35,7 @@ func saddCommandFunc(ctx Context) {
 
 	var key = ctx.args[1]
 	var keyLen = uint32(len(key))
-	var keySize = make([]byte, 4)
+	var keySize = make([]byte, setKeySize)
 	var setSize uint32 = 0
 
 	metaValue, err := ctx.db.Get(key)
@@ -59,7 +65,7 @@ func saddCommandFunc(ctx Context) {
 	}
 	setSize += cnt
 
-	var metaSize = make([]byte, 4)
+	var metaSize = make([]byte, setKeySize)
 	binary.BigEndian.PutUint32(metaSize, setSize)
 	metaValue = metaSize
 	err = ctx.db.Set(key, append(typeSet, metaValue...), 0)
@@ -80,7 +86,7 @@ func sismemberCommandFunc(ctx Context) {
 
 	var key = ctx.args[1]
 	var keyLen = uint32(len(key))
-	var keySize = make([]byte, 4)
+	var keySize = make([]byte, setKeySize)
 
 	binary.BigEndian.PutUint32(keySize, keyLen)
 	var member = ctx.args[2]
@@ -119,7 +125,7 @@ func spopCommandFunc(ctx Context) {
 	}
 
 	var keyLen = uint32(len(key))
-	var keySize = make([]byte, 4)
+	var keySize = make([]byte, setKeySize)
 	binary.BigEndian.PutUint32(keySize, keyLen)
 
 	prefixBuff := bytes.NewBuffer([]byte{})
@@ -129,7 +135,7 @@ func spopCommandFunc(ctx Context) {
 
 	var members [][]byte
 	var memberToDel [][]byte
-	var memberPos = uint32(len(typeSet)) + uint32(len(keySize)) + keyLen
+	var memberPos = typeSetSize + setKeySize + keyLen
 	var scanFunc = func(k, v []byte) {
 		memberToDel = append(memberToDel, k)
 		members = append(members, k[memberPos:])
@@ -163,7 +169,7 @@ func spopCommandFunc(ctx Context) {
 	}
 
 	if setSize > 0 {
-		var metaSize = make([]byte, 4)
+		var metaSize = make([]byte, setKeySize)
 		binary.BigEndian.PutUint32(metaSize, setSize)
 		metaValue = metaSize
 		err = ctx.db.Set(key, append(typeSet, metaValue...), 0)
@@ -198,7 +204,7 @@ func sremCommandFunc(ctx Context) {
 	}
 
 	var keyLen = uint32(len(key))
-	var keySize = make([]byte, 4)
+	var keySize = make([]byte, setKeySize)
 	binary.BigEndian.PutUint32(keySize, keyLen)
 	var memberToDel [][]byte
 	for _, member := range ctx.args[2:] {
@@ -229,7 +235,7 @@ func sremCommandFunc(ctx Context) {
 		}
 	}
 
-	var metaSize = make([]byte, 4)
+	var metaSize = make([]byte, setKeySize)
 	binary.BigEndian.PutUint32(metaSize, setSize)
 	metaValue = metaSize
 	err = ctx.db.Set(key, append(typeSet, metaValue...), 0)
@@ -266,7 +272,7 @@ func smembersCommandFunc(ctx Context) {
 
 	var key = ctx.args[1]
 	var keyLen = uint32(len(key))
-	var keySize = make([]byte, 4)
+	var keySize = make([]byte, setKeySize)
 
 	_, err := ctx.db.Get(key)
 	if err != nil && err.Error() == ErrKeyNotExist {
@@ -282,7 +288,7 @@ func smembersCommandFunc(ctx Context) {
 	prefixBuff.Write(key)
 
 	var members [][]byte
-	var memberPos = uint32(len(typeSet)) + uint32(len(keySize)) + keyLen
+	var memberPos = typeSetSize + setKeySize + keyLen
 	var scanFunc = func(k, v []byte) {
 		members = append(members, k[memberPos:])
 	}
