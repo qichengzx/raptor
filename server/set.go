@@ -3,6 +3,7 @@ package server
 import (
 	"bytes"
 	"encoding/binary"
+	"errors"
 	"fmt"
 	"github.com/qichengzx/raptor/storage/badger"
 	"strconv"
@@ -39,9 +40,12 @@ func saddCommandFunc(ctx Context) {
 	var keySize = make([]byte, typeSetKeySize)
 	var setSize uint32 = 0
 
-	metaValue, err := ctx.db.Get(key)
+	metaValue, err := typeSetGetMeta(ctx, key)
 	if err == nil && metaValue != nil {
 		setSize = binary.BigEndian.Uint32(metaValue[1:5])
+	} else {
+		ctx.Conn.WriteError(err.Error())
+		return
 	}
 
 	binary.BigEndian.PutUint32(keySize, keyLen)
@@ -83,6 +87,11 @@ func sismemberCommandFunc(ctx Context) {
 	}
 
 	var key = ctx.args[1]
+	_, err := typeSetGetMeta(ctx, key)
+	if err != nil {
+		ctx.Conn.WriteError(err.Error())
+		return
+	}
 	var keyLen = uint32(len(key))
 	var keySize = make([]byte, typeSetKeySize)
 
@@ -111,9 +120,9 @@ func spopCommandFunc(ctx Context) {
 	}
 
 	var key = ctx.args[1]
-	metaValue, err := ctx.db.Get(key)
-	if err != nil && err.Error() == ErrKeyNotExist {
-		ctx.Conn.WriteNull()
+	metaValue, err := typeSetGetMeta(ctx, key)
+	if err != nil {
+		ctx.Conn.WriteError(err.Error())
 		return
 	}
 
@@ -168,9 +177,9 @@ func srandmemberCommandFunc(ctx Context) {
 	}
 
 	var key = ctx.args[1]
-	_, err := ctx.db.Get(key)
-	if err != nil && err.Error() == ErrKeyNotExist {
-		ctx.Conn.WriteNull()
+	_, err := typeSetGetMeta(ctx, key)
+	if err != nil {
+		ctx.Conn.WriteError(err.Error())
 		return
 	}
 
@@ -207,9 +216,9 @@ func sremCommandFunc(ctx Context) {
 	}
 
 	var key = ctx.args[1]
-	metaValue, err := ctx.db.Get(key)
-	if err != nil && err.Error() == ErrKeyNotExist {
-		ctx.Conn.WriteError(ErrWrongType)
+	metaValue, err := typeSetGetMeta(ctx, key)
+	if err != nil {
+		ctx.Conn.WriteError(err.Error())
 		return
 	}
 
@@ -266,7 +275,12 @@ func scardCommandFunc(ctx Context) {
 		return
 	}
 
-	metaValue, _ := ctx.db.Get(ctx.args[1])
+	metaValue, err := typeSetGetMeta(ctx, ctx.args[1])
+	if err != nil {
+		ctx.Conn.WriteError(err.Error())
+		return
+	}
+
 	var setSize uint32 = 0
 	if metaValue != nil {
 		setSize = binary.BigEndian.Uint32(metaValue[1:5])
@@ -283,9 +297,9 @@ func smembersCommandFunc(ctx Context) {
 	}
 
 	var key = ctx.args[1]
-	_, err := ctx.db.Get(key)
-	if err != nil && err.Error() == ErrKeyNotExist {
-		ctx.Conn.WriteError(ErrEmpty)
+	_, err := typeSetGetMeta(ctx, ctx.args[1])
+	if err != nil {
+		ctx.Conn.WriteError(err.Error())
 		return
 	}
 
@@ -295,6 +309,21 @@ func smembersCommandFunc(ctx Context) {
 	for _, member := range members {
 		ctx.Conn.WriteBulk(member[memberPos:])
 	}
+}
+
+func typeSetGetMeta(ctx Context, key []byte) ([]byte, error) {
+	metaValue, err := ctx.db.Get(key)
+	if err != nil && err.Error() == ErrKeyNotExist {
+		return nil, err
+	}
+
+	if metaValue != nil && len(metaValue) > 1 {
+		if string(metaValue[0]) != string(typeSet) {
+			return nil, errors.New(ErrWrongType)
+		}
+	}
+
+	return metaValue, nil
 }
 
 func typeSetSaveMeta(ctx Context, key []byte, size uint32) error {
