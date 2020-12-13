@@ -172,20 +172,12 @@ func (db *BadgerDB) Scan(scanOpts ScannerOptions) error {
 			}
 		}
 
-		valid := func(it *badger.Iterator) bool {
-			if !it.Valid() {
-				return false
-			}
-
-			if scanOpts.Prefix != nil && !it.ValidForPrefix(scanOpts.Prefix) {
-				return false
-			}
-
-			return true
-		}
-
 		var cnt int64 = 0
-		for start(it); valid(it); it.Next() {
+		for start(it); it.Valid(); it.Next() {
+			if scanOpts.Prefix != nil && !it.ValidForPrefix(scanOpts.Prefix) {
+				continue
+			}
+
 			var k, v []byte
 
 			item := it.Item()
