@@ -10,12 +10,12 @@ import (
 
 const (
 	cmdSAdd        = "sadd"
-	cmdSismember   = "sismember"
+	cmdSIsmember   = "sismember"
 	cmdSPop        = "spop"
-	cmdSrandmember = "srandmember"
+	cmdSRandmember = "srandmember"
 	cmdSRem        = "srem"
 	cmdSCard       = "scard"
-	cmdSmembers    = "smembers"
+	cmdSMembers    = "smembers"
 )
 
 const (
@@ -66,10 +66,7 @@ func saddCommandFunc(ctx Context) {
 	}
 	setSize += cnt
 
-	var metaSize = make([]byte, typeSetKeySize)
-	binary.BigEndian.PutUint32(metaSize, setSize)
-	metaValue = metaSize
-	err = ctx.db.Set(key, append(typeSet, metaValue...), 0)
+	err = typeSetSaveMeta(ctx, key, setSize)
 	if err != nil {
 		ctx.Conn.WriteInt(0)
 		return
@@ -151,10 +148,7 @@ func spopCommandFunc(ctx Context) {
 	}
 
 	if setSize > 0 {
-		var metaSize = make([]byte, typeSetKeySize)
-		binary.BigEndian.PutUint32(metaSize, setSize)
-		metaValue = metaSize
-		err = ctx.db.Set(key, append(typeSet, metaValue...), 0)
+		err = typeSetSaveMeta(ctx, key, setSize)
 		if err != nil {
 			ctx.Conn.WriteInt(0)
 			return
@@ -256,10 +250,7 @@ func sremCommandFunc(ctx Context) {
 		}
 	}
 
-	var metaSize = make([]byte, typeSetKeySize)
-	binary.BigEndian.PutUint32(metaSize, setSize)
-	metaValue = metaSize
-	err = ctx.db.Set(key, append(typeSet, metaValue...), 0)
+	err = typeSetSaveMeta(ctx, key, setSize)
 	if err != nil {
 		ctx.Conn.WriteInt(0)
 		return
@@ -304,6 +295,13 @@ func smembersCommandFunc(ctx Context) {
 	for _, member := range members {
 		ctx.Conn.WriteBulk(member[memberPos:])
 	}
+}
+
+func typeSetSaveMeta(ctx Context, key []byte, size uint32) error {
+	var metaValue = make([]byte, typeSetKeySize)
+	binary.BigEndian.PutUint32(metaValue, size)
+
+	return ctx.db.Set(key, append(typeSet, metaValue...), 0)
 }
 
 func typeSetScan(ctx Context, key []byte, cnt int64) [][]byte {

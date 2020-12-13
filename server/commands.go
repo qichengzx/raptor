@@ -36,12 +36,12 @@ var (
 
 		//SET
 		cmdSAdd:        saddCommandFunc,
-		cmdSismember:   sismemberCommandFunc,
+		cmdSIsmember:   sismemberCommandFunc,
 		cmdSPop:        spopCommandFunc,
-		cmdSrandmember: srandmemberCommandFunc,
+		cmdSRandmember: srandmemberCommandFunc,
 		cmdSRem:        sremCommandFunc,
 		cmdSCard:       scardCommandFunc,
-		cmdSmembers:    smembersCommandFunc,
+		cmdSMembers:    smembersCommandFunc,
 
 		//DATABASE
 		cmdSelect:   selectCommandFunc,
