@@ -44,8 +44,10 @@ func saddCommandFunc(ctx Context) {
 	if err == nil && metaValue != nil {
 		setSize = binary.BigEndian.Uint32(metaValue[1:5])
 	} else {
-		ctx.Conn.WriteError(err.Error())
-		return
+		if err.Error() != ErrKeyNotExist {
+			ctx.Conn.WriteError(err.Error())
+			return
+		}
 	}
 
 	binary.BigEndian.PutUint32(keySize, keyLen)
