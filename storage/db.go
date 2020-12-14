@@ -29,10 +29,10 @@ type ObjectType []byte
 
 var (
 	ObjectString = "s"
-	ObjectList   = "l"
-	ObjectHash   = "h"
+	ObjectList   = "L"
+	ObjectHash   = "H"
 	ObjectSet    = "S"
-	ObjectZset   = "z"
+	ObjectZset   = "Z"
 )
 
 var TypeName = map[string]string{

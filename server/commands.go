@@ -43,6 +43,9 @@ var (
 		cmdSCard:       scardCommandFunc,
 		cmdSMembers:    smembersCommandFunc,
 
+		//HASH
+		cmdHSet: hsetCommandFunc,
+
 		//DATABASE
 		cmdSelect:   selectCommandFunc,
 		cmdDel:      delCommandFunc,
