@@ -45,6 +45,7 @@ var (
 
 		//HASH
 		cmdHSet: hsetCommandFunc,
+		cmdHGet: hgetCommandFunc,
 
 		//DATABASE
 		cmdSelect:   selectCommandFunc,
