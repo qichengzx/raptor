@@ -44,8 +44,9 @@ var (
 		cmdSMembers:    smembersCommandFunc,
 
 		//HASH
-		cmdHSet: hsetCommandFunc,
-		cmdHGet: hgetCommandFunc,
+		cmdHSet:    hsetCommandFunc,
+		cmdHGet:    hgetCommandFunc,
+		cmdHExists: hexistsCommandFunc,
 
 		//DATABASE
 		cmdSelect:   selectCommandFunc,
