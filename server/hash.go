@@ -11,6 +11,7 @@ const (
 	cmdHSet    = "hset"
 	cmdHGet    = "hget"
 	cmdHExists = "hexists"
+	cmdHLen    = "hlen"
 )
 
 const (
@@ -128,6 +129,31 @@ func hexistsCommandFunc(ctx Context) {
 	}
 
 	ctx.Conn.WriteInt(1)
+}
+
+func hlenCommandFunc(ctx Context) {
+	if len(ctx.args) != 2 {
+		ctx.Conn.WriteError(fmt.Sprintf(ErrWrongArgs, ctx.cmd))
+		return
+	}
+
+	metaValue, err := typeHashGetMeta(ctx, ctx.args[1])
+	if err != nil {
+		ctx.Conn.WriteError(err.Error())
+		return
+	}
+
+	if metaValue == nil {
+		ctx.Conn.WriteInt(0)
+		return
+	}
+
+	var hashSize uint32 = 0
+	if metaValue != nil {
+		hashSize = binary.BigEndian.Uint32(metaValue[1:5])
+	}
+
+	ctx.Conn.WriteInt(int(hashSize))
 }
 
 func typeHashGetMeta(ctx Context, key []byte) ([]byte, error) {
