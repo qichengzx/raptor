@@ -5,6 +5,7 @@ import (
 	"encoding/binary"
 	"errors"
 	"fmt"
+	"github.com/qichengzx/raptor/storage/badger"
 )
 
 const (
@@ -13,6 +14,7 @@ const (
 	cmdHExists = "hexists"
 	cmdHDel    = "hdel"
 	cmdHLen    = "hlen"
+	cmdHGetall = "hgetall"
 )
 
 const (
@@ -215,6 +217,28 @@ func hlenCommandFunc(ctx Context) {
 	ctx.Conn.WriteInt(int(hashSize))
 }
 
+func hgetallCommandFunc(ctx Context) {
+	if len(ctx.args) != 2 {
+		ctx.Conn.WriteError(fmt.Sprintf(ErrWrongArgs, ctx.cmd))
+		return
+	}
+
+	var key = ctx.args[1]
+	_, err := typeHashGetMeta(ctx, key)
+	if err != nil && err.Error() != ErrKeyNotExist {
+		ctx.Conn.WriteError(err.Error())
+		return
+	}
+
+	var fieldPos = typeHashSize + typeHashKeySize + uint32(len(key))
+	fields, values := typeHashScan(ctx, key, 0)
+	ctx.Conn.WriteArray(len(fields) * 2)
+	for i := 0; i < len(fields); i++ {
+		ctx.Conn.WriteBulk(fields[i][fieldPos:])
+		ctx.Conn.WriteBulk(values[i])
+	}
+}
+
 func typeHashGetMeta(ctx Context, key []byte) ([]byte, error) {
 	metaValue, err := ctx.db.Get(key)
 	if err != nil && err.Error() == ErrKeyNotExist {
@@ -235,4 +259,32 @@ func typeHashSetMeta(ctx Context, key []byte, size uint32) error {
 	binary.BigEndian.PutUint32(metaValue, size)
 
 	return ctx.db.Set(key, append(typeHash, metaValue...), 0)
+}
+
+func typeHashScan(ctx Context, key []byte, cnt int64) ([][]byte, [][]byte) {
+	var fields [][]byte
+	var values [][]byte
+	var scanFunc = func(k, v []byte) {
+		fields = append(fields, k)
+		values = append(values, v)
+	}
+
+	var keySize = make([]byte, typeHashKeySize)
+	var keyLen = uint32(len(key))
+	binary.BigEndian.PutUint32(keySize, keyLen)
+
+	prefixBuff := bytes.NewBuffer([]byte{})
+	prefixBuff.Write(typeHash)
+	prefixBuff.Write(keySize)
+	prefixBuff.Write(key)
+
+	scanOpts := badger.ScannerOptions{
+		Prefix:      prefixBuff.Bytes(),
+		FetchValues: true,
+		Handler:     scanFunc,
+		Count:       cnt,
+	}
+	ctx.db.Scan(scanOpts)
+
+	return fields, values
 }

@@ -49,6 +49,7 @@ var (
 		cmdHExists: hexistsCommandFunc,
 		cmdHDel:    hdelCommandFunc,
 		cmdHLen:    hlenCommandFunc,
+		cmdHGetall: hgetallCommandFunc,
 
 		//DATABASE
 		cmdSelect:   selectCommandFunc,
