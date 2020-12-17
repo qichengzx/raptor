@@ -15,6 +15,7 @@ const (
 	cmdHDel    = "hdel"
 	cmdHLen    = "hlen"
 	cmdHGetall = "hgetall"
+	cmdHVals   = "hvals"
 )
 
 const (
@@ -235,6 +236,26 @@ func hgetallCommandFunc(ctx Context) {
 	ctx.Conn.WriteArray(len(fields) * 2)
 	for i := 0; i < len(fields); i++ {
 		ctx.Conn.WriteBulk(fields[i][fieldPos:])
+		ctx.Conn.WriteBulk(values[i])
+	}
+}
+
+func hvalsCommandFunc(ctx Context) {
+	if len(ctx.args) != 2 {
+		ctx.Conn.WriteError(fmt.Sprintf(ErrWrongArgs, ctx.cmd))
+		return
+	}
+
+	var key = ctx.args[1]
+	_, err := typeHashGetMeta(ctx, key)
+	if err != nil && err.Error() != ErrKeyNotExist {
+		ctx.Conn.WriteError(err.Error())
+		return
+	}
+
+	_, values := typeHashScan(ctx, key, 0)
+	ctx.Conn.WriteArray(len(values))
+	for i := 0; i < len(values); i++ {
 		ctx.Conn.WriteBulk(values[i])
 	}
 }
