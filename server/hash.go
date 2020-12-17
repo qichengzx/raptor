@@ -15,6 +15,7 @@ const (
 	cmdHDel    = "hdel"
 	cmdHLen    = "hlen"
 	cmdHGetall = "hgetall"
+	cmdHKeys   = "hkeys"
 	cmdHVals   = "hvals"
 )
 
@@ -237,6 +238,27 @@ func hgetallCommandFunc(ctx Context) {
 	for i := 0; i < len(fields); i++ {
 		ctx.Conn.WriteBulk(fields[i][fieldPos:])
 		ctx.Conn.WriteBulk(values[i])
+	}
+}
+
+func hkeysCommandFunc(ctx Context) {
+	if len(ctx.args) != 2 {
+		ctx.Conn.WriteError(fmt.Sprintf(ErrWrongArgs, ctx.cmd))
+		return
+	}
+
+	var key = ctx.args[1]
+	_, err := typeHashGetMeta(ctx, key)
+	if err != nil && err.Error() != ErrKeyNotExist {
+		ctx.Conn.WriteError(err.Error())
+		return
+	}
+
+	var fieldPos = typeHashSize + typeHashKeySize + uint32(len(key))
+	fields, _ := typeHashScan(ctx, key, 0)
+	ctx.Conn.WriteArray(len(fields))
+	for i := 0; i < len(fields); i++ {
+		ctx.Conn.WriteBulk(fields[i][fieldPos:])
 	}
 }
 
