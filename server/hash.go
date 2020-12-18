@@ -255,20 +255,26 @@ func hmgetCommandFunc(ctx Context) {
 		return
 	}
 
-	var keyLen = uint32(len(key))
-	var keySize = make([]byte, typeHashKeySize)
-	binary.BigEndian.PutUint32(keySize, keyLen)
-
 	var values [][]byte
-	for _, field := range ctx.args[2:] {
-		fieldBuff := bytes.NewBuffer([]byte{})
-		fieldBuff.Write(typeHash)
-		fieldBuff.Write(keySize)
-		fieldBuff.Write(key)
-		fieldBuff.Write(field)
+	if err != nil && err.Error() == ErrKeyNotExist {
+		for i := 0; i < len(ctx.args[2:]); i++ {
+			values = append(values, nil)
+		}
+	} else {
+		var keyLen = uint32(len(key))
+		var keySize = make([]byte, typeHashKeySize)
+		binary.BigEndian.PutUint32(keySize, keyLen)
 
-		v, _ := ctx.db.Get(fieldBuff.Bytes())
-		values = append(values, v)
+		for _, field := range ctx.args[2:] {
+			fieldBuff := bytes.NewBuffer([]byte{})
+			fieldBuff.Write(typeHash)
+			fieldBuff.Write(keySize)
+			fieldBuff.Write(key)
+			fieldBuff.Write(field)
+
+			v, _ := ctx.db.Get(fieldBuff.Bytes())
+			values = append(values, v)
+		}
 	}
 
 	ctx.Conn.WriteArray(len(values))
