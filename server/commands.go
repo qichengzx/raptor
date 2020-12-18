@@ -50,6 +50,7 @@ var (
 		cmdHDel:    hdelCommandFunc,
 		cmdHLen:    hlenCommandFunc,
 		cmdHGetall: hgetallCommandFunc,
+		cmdHMGet:   hmgetCommandFunc,
 		cmdHKeys:   hkeysCommandFunc,
 		cmdHVals:   hvalsCommandFunc,
 
