@@ -250,7 +250,7 @@ func hmgetCommandFunc(ctx Context) {
 
 	var key = ctx.args[1]
 	_, err := typeHashGetMeta(ctx, key)
-	if err != nil {
+	if err != nil && err.Error() != ErrKeyNotExist {
 		ctx.Conn.WriteError(err.Error())
 		return
 	}
