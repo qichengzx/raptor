@@ -45,6 +45,7 @@ var (
 
 		//HASH
 		cmdHSet:    hsetCommandFunc,
+		cmdHSetNX:  hsetnxCommandFunc,
 		cmdHGet:    hgetCommandFunc,
 		cmdHExists: hexistsCommandFunc,
 		cmdHDel:    hdelCommandFunc,

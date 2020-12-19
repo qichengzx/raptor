@@ -10,6 +10,7 @@ import (
 
 const (
 	cmdHSet    = "hset"
+	cmdHSetNX  = "hsetnx"
 	cmdHGet    = "hget"
 	cmdHExists = "hexists"
 	cmdHDel    = "hdel"
@@ -57,6 +58,55 @@ func hsetCommandFunc(ctx Context) {
 	fieldBuff.Write(key)
 	fieldBuff.Write(ctx.args[2])
 
+	err = ctx.db.Set(fieldBuff.Bytes(), ctx.args[3], 0)
+	if err != nil {
+		ctx.Conn.WriteInt(0)
+		return
+	}
+	hashSize += 1
+
+	err = typeHashSetMeta(ctx, key, hashSize)
+	if err != nil {
+		ctx.Conn.WriteInt(0)
+		return
+	}
+
+	ctx.Conn.WriteInt(1)
+}
+
+func hsetnxCommandFunc(ctx Context) {
+	if len(ctx.args) != 4 {
+		ctx.Conn.WriteError(fmt.Sprintf(ErrWrongArgs, ctx.cmd))
+		return
+	}
+
+	var key = ctx.args[1]
+	var keyLen = uint32(len(key))
+	var keySize = make([]byte, typeHashKeySize)
+	var hashSize uint32 = 0
+
+	metaValue, err := typeHashGetMeta(ctx, key)
+	if err == nil && metaValue != nil {
+		hashSize = binary.BigEndian.Uint32(metaValue[1:5])
+	} else {
+		if err.Error() != ErrKeyNotExist {
+			ctx.Conn.WriteError(err.Error())
+			return
+		}
+	}
+
+	binary.BigEndian.PutUint32(keySize, keyLen)
+	fieldBuff := bytes.NewBuffer([]byte{})
+	fieldBuff.Write(typeHash)
+	fieldBuff.Write(keySize)
+	fieldBuff.Write(key)
+	fieldBuff.Write(ctx.args[2])
+
+	exists, err := ctx.db.Get(fieldBuff.Bytes())
+	if err == nil && exists != nil {
+		ctx.Conn.WriteInt(0)
+		return
+	}
 	err = ctx.db.Set(fieldBuff.Bytes(), ctx.args[3], 0)
 	if err != nil {
 		ctx.Conn.WriteInt(0)
@@ -351,8 +401,10 @@ func typeHashSetMeta(ctx Context, key []byte, size uint32) error {
 }
 
 func typeHashScan(ctx Context, key []byte, cnt int64) ([][]byte, [][]byte) {
-	var fields [][]byte
-	var values [][]byte
+	var (
+		fields [][]byte
+		values [][]byte
+	)
 	var scanFunc = func(k, v []byte) {
 		fields = append(fields, k)
 		values = append(values, v)
