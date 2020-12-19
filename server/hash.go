@@ -337,11 +337,11 @@ func hmsetCommandFunc(ctx Context) {
 	hashSize += cnt
 	err = typeHashSetMeta(ctx, key, hashSize)
 	if err != nil {
-		ctx.Conn.WriteInt(0)
+		ctx.Conn.WriteError(err.Error())
 		return
 	}
 
-	ctx.Conn.WriteInt64(int64(cnt))
+	ctx.Conn.WriteString(RespOK)
 }
 
 func hmgetCommandFunc(ctx Context) {
