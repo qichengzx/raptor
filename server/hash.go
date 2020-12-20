@@ -40,8 +40,6 @@ func hsetCommandFunc(ctx Context) {
 	}
 
 	var key = ctx.args[1]
-	var keyLen = uint32(len(key))
-	var keySize = make([]byte, typeHashKeySize)
 	var hashSize uint32 = 0
 
 	metaValue, err := typeHashGetMeta(ctx, key)
@@ -54,14 +52,8 @@ func hsetCommandFunc(ctx Context) {
 		}
 	}
 
-	binary.BigEndian.PutUint32(keySize, keyLen)
-	fieldBuff := bytes.NewBuffer([]byte{})
-	fieldBuff.Write(typeHash)
-	fieldBuff.Write(keySize)
-	fieldBuff.Write(key)
-	fieldBuff.Write(ctx.args[2])
-
-	err = ctx.db.Set(fieldBuff.Bytes(), ctx.args[3], 0)
+	field := typeHashMarshalField(key, ctx.args[2])
+	err = ctx.db.Set(field, ctx.args[3], 0)
 	if err != nil {
 		ctx.Conn.WriteInt(0)
 		return
@@ -84,8 +76,6 @@ func hsetnxCommandFunc(ctx Context) {
 	}
 
 	var key = ctx.args[1]
-	var keyLen = uint32(len(key))
-	var keySize = make([]byte, typeHashKeySize)
 	var hashSize uint32 = 0
 
 	metaValue, err := typeHashGetMeta(ctx, key)
@@ -98,19 +88,13 @@ func hsetnxCommandFunc(ctx Context) {
 		}
 	}
 
-	binary.BigEndian.PutUint32(keySize, keyLen)
-	fieldBuff := bytes.NewBuffer([]byte{})
-	fieldBuff.Write(typeHash)
-	fieldBuff.Write(keySize)
-	fieldBuff.Write(key)
-	fieldBuff.Write(ctx.args[2])
-
-	exists, err := ctx.db.Get(fieldBuff.Bytes())
+	field := typeHashMarshalField(key, ctx.args[2])
+	exists, err := ctx.db.Get(field)
 	if err == nil && exists != nil {
 		ctx.Conn.WriteInt(0)
 		return
 	}
-	err = ctx.db.Set(fieldBuff.Bytes(), ctx.args[3], 0)
+	err = ctx.db.Set(field, ctx.args[3], 0)
 	if err != nil {
 		ctx.Conn.WriteInt(0)
 		return
@@ -138,18 +122,9 @@ func hgetCommandFunc(ctx Context) {
 		ctx.Conn.WriteError(err.Error())
 		return
 	}
-	var keyLen = uint32(len(key))
-	var keySize = make([]byte, typeHashKeySize)
 
-	binary.BigEndian.PutUint32(keySize, keyLen)
-
-	fieldBuff := bytes.NewBuffer([]byte{})
-	fieldBuff.Write(typeHash)
-	fieldBuff.Write(keySize)
-	fieldBuff.Write(key)
-	fieldBuff.Write(ctx.args[2])
-
-	v, err := ctx.db.Get(fieldBuff.Bytes())
+	field := typeHashMarshalField(key, ctx.args[2])
+	v, err := ctx.db.Get(field)
 	if err != nil {
 		ctx.Conn.WriteNull()
 		return
@@ -170,18 +145,9 @@ func hexistsCommandFunc(ctx Context) {
 		ctx.Conn.WriteError(err.Error())
 		return
 	}
-	var keyLen = uint32(len(key))
-	var keySize = make([]byte, typeHashKeySize)
 
-	binary.BigEndian.PutUint32(keySize, keyLen)
-
-	fieldBuff := bytes.NewBuffer([]byte{})
-	fieldBuff.Write(typeHash)
-	fieldBuff.Write(keySize)
-	fieldBuff.Write(key)
-	fieldBuff.Write(ctx.args[2])
-
-	_, err = ctx.db.Get(fieldBuff.Bytes())
+	field := typeHashMarshalField(key, ctx.args[2])
+	_, err = ctx.db.Get(field)
 	if err != nil {
 		ctx.Conn.WriteInt(0)
 		return
@@ -267,16 +233,8 @@ func hincrbyCommandFunc(ctx Context) {
 		}
 	}
 
-	var keySize = make([]byte, typeHashKeySize)
-	var keyLen = uint32(len(key))
-	binary.BigEndian.PutUint32(keySize, keyLen)
-	fieldBuff := bytes.NewBuffer([]byte{})
-	fieldBuff.Write(typeHash)
-	fieldBuff.Write(keySize)
-	fieldBuff.Write(key)
-	fieldBuff.Write(ctx.args[2])
-
-	val, err := ctx.db.Get(fieldBuff.Bytes())
+	field := typeHashMarshalField(key, ctx.args[2])
+	val, err := ctx.db.Get(field)
 	if err != nil {
 		val = []byte("0")
 	}
@@ -295,7 +253,7 @@ func hincrbyCommandFunc(ctx Context) {
 
 	valInt += by
 	valStr := strconv.FormatInt(valInt, 10)
-	err = ctx.db.Set(fieldBuff.Bytes(), []byte(valStr), 0)
+	err = ctx.db.Set(field, []byte(valStr), 0)
 	if err != nil {
 		ctx.Conn.WriteInt(0)
 		return
@@ -517,6 +475,19 @@ func typeHashSetMeta(ctx Context, key []byte, size uint32) error {
 	binary.BigEndian.PutUint32(metaValue, size)
 
 	return ctx.db.Set(key, append(typeHash, metaValue...), 0)
+}
+
+func typeHashMarshalField(key, field []byte) []byte {
+	var keySize = make([]byte, typeHashKeySize)
+	binary.BigEndian.PutUint32(keySize, uint32(len(key)))
+
+	fieldBuff := bytes.NewBuffer([]byte{})
+	fieldBuff.Write(typeHash)
+	fieldBuff.Write(keySize)
+	fieldBuff.Write(key)
+	fieldBuff.Write(field)
+
+	return fieldBuff.Bytes()
 }
 
 func typeHashScan(ctx Context, key []byte, cnt int64) ([][]byte, [][]byte) {
