@@ -122,8 +122,13 @@ func hgetCommandFunc(ctx Context) {
 	var key = ctx.args[1]
 	_, err := typeHashGetMeta(ctx, key)
 	if err != nil {
-		ctx.Conn.WriteError(err.Error())
-		return
+		if err.Error() != ErrKeyNotExist {
+			ctx.Conn.WriteError(err.Error())
+			return
+		} else {
+			ctx.Conn.WriteNull()
+			return
+		}
 	}
 
 	field := typeHashMarshalField(key, ctx.args[2])
@@ -145,8 +150,13 @@ func hexistsCommandFunc(ctx Context) {
 	var key = ctx.args[1]
 	_, err := typeHashGetMeta(ctx, key)
 	if err != nil {
-		ctx.Conn.WriteError(err.Error())
-		return
+		if err.Error() != ErrKeyNotExist {
+			ctx.Conn.WriteError(err.Error())
+			return
+		} else {
+			ctx.Conn.WriteInt(0)
+			return
+		}
 	}
 
 	field := typeHashMarshalField(key, ctx.args[2])
@@ -168,8 +178,13 @@ func hdelCommandFunc(ctx Context) {
 	var key = ctx.args[1]
 	metaValue, err := typeHashGetMeta(ctx, key)
 	if err != nil {
-		ctx.Conn.WriteError(err.Error())
-		return
+		if err.Error() != ErrKeyNotExist {
+			ctx.Conn.WriteError(err.Error())
+			return
+		} else {
+			ctx.Conn.WriteInt(0)
+			return
+		}
 	}
 	var keyLen = uint32(len(key))
 	var keySize = make([]byte, typeHashKeySize)
@@ -282,13 +297,13 @@ func hlenCommandFunc(ctx Context) {
 
 	metaValue, err := typeHashGetMeta(ctx, ctx.args[1])
 	if err != nil {
-		ctx.Conn.WriteError(err.Error())
-		return
-	}
-
-	if metaValue == nil {
-		ctx.Conn.WriteInt(0)
-		return
+		if err.Error() != ErrKeyNotExist {
+			ctx.Conn.WriteError(err.Error())
+			return
+		} else {
+			ctx.Conn.WriteInt(0)
+			return
+		}
 	}
 
 	var hashSize uint32 = 0
