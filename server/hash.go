@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/qichengzx/raptor/storage/badger"
+	"strconv"
 )
 
 const (
@@ -15,6 +16,7 @@ const (
 	cmdHExists = "hexists"
 	cmdHDel    = "hdel"
 	cmdHLen    = "hlen"
+	cmdHIncrby = "hincrby"
 	cmdHGetall = "hgetall"
 	cmdHMSet   = "hmset"
 	cmdHMGet   = "hmget"
@@ -244,6 +246,71 @@ func hdelCommandFunc(ctx Context) {
 	}
 
 	ctx.Conn.WriteInt(lenToDel)
+}
+
+func hincrbyCommandFunc(ctx Context) {
+	if len(ctx.args) != 4 {
+		ctx.Conn.WriteError(fmt.Sprintf(ErrWrongArgs, ctx.cmd))
+		return
+	}
+
+	var key = ctx.args[1]
+	var hashSize uint32 = 0
+
+	metaValue, err := typeHashGetMeta(ctx, key)
+	if err == nil && metaValue != nil {
+		hashSize = binary.BigEndian.Uint32(metaValue[1:5])
+	} else {
+		if err.Error() != ErrKeyNotExist {
+			ctx.Conn.WriteError(err.Error())
+			return
+		}
+	}
+
+	var keySize = make([]byte, typeHashKeySize)
+	var keyLen = uint32(len(key))
+	binary.BigEndian.PutUint32(keySize, keyLen)
+	fieldBuff := bytes.NewBuffer([]byte{})
+	fieldBuff.Write(typeHash)
+	fieldBuff.Write(keySize)
+	fieldBuff.Write(key)
+	fieldBuff.Write(ctx.args[2])
+
+	val, err := ctx.db.Get(fieldBuff.Bytes())
+	if err != nil {
+		val = []byte("0")
+	}
+
+	valInt, err := strconv.ParseInt(string(val), 10, 64)
+	if err != nil {
+		ctx.Conn.WriteError(ErrHashValue)
+		return
+	}
+
+	by, err := strconv.ParseInt(string(ctx.args[3]), 10, 64)
+	if err != nil {
+		ctx.Conn.WriteError(ErrValue)
+		return
+	}
+
+	valInt += by
+	valStr := strconv.FormatInt(valInt, 10)
+	err = ctx.db.Set(fieldBuff.Bytes(), []byte(valStr), 0)
+	if err != nil {
+		ctx.Conn.WriteInt(0)
+		return
+	}
+
+	if metaValue == nil && hashSize == 0 {
+		hashSize += 1
+		err = typeHashSetMeta(ctx, key, hashSize)
+		if err != nil {
+			ctx.Conn.WriteInt(0)
+			return
+		}
+	}
+
+	ctx.Conn.WriteInt64(valInt)
 }
 
 func hlenCommandFunc(ctx Context) {

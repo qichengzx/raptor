@@ -50,6 +50,7 @@ var (
 		cmdHExists: hexistsCommandFunc,
 		cmdHDel:    hdelCommandFunc,
 		cmdHLen:    hlenCommandFunc,
+		cmdHIncrby: hincrbyCommandFunc,
 		cmdHGetall: hgetallCommandFunc,
 		cmdHMSet:   hmsetCommandFunc,
 		cmdHMGet:   hmgetCommandFunc,
