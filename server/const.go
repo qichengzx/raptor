@@ -11,6 +11,7 @@ const (
 
 	ErrNoAuth     = "NOAUTH Authentication required"
 	ErrWrongArgs  = "ERR wrong number of arguments for '%s' command"
+	ErrWrongArgsN = "wrong number of arguments (given %d, expected %d)"
 	ErrPassword   = "ERR invalid password"
 	ErrValue      = "ERR value is not an integer or out of range"
 	ErrNoKey      = "ERR no such key"

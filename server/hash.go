@@ -43,13 +43,13 @@ func hsetCommandFunc(ctx Context) {
 	var hashSize uint32 = 0
 
 	metaValue, err := typeHashGetMeta(ctx, key)
-	if err == nil && metaValue != nil {
+	if err != nil && err.Error() != ErrKeyNotExist {
+		ctx.Conn.WriteError(err.Error())
+		return
+	}
+
+	if metaValue != nil {
 		hashSize = binary.BigEndian.Uint32(metaValue[1:5])
-	} else {
-		if err.Error() != ErrKeyNotExist {
-			ctx.Conn.WriteError(err.Error())
-			return
-		}
 	}
 
 	field := typeHashMarshalField(key, ctx.args[2])
@@ -82,13 +82,13 @@ func hsetnxCommandFunc(ctx Context) {
 	var hashSize uint32 = 0
 
 	metaValue, err := typeHashGetMeta(ctx, key)
-	if err == nil && metaValue != nil {
+	if err != nil && err.Error() != ErrKeyNotExist {
+		ctx.Conn.WriteError(err.Error())
+		return
+	}
+
+	if metaValue != nil {
 		hashSize = binary.BigEndian.Uint32(metaValue[1:5])
-	} else {
-		if err.Error() != ErrKeyNotExist {
-			ctx.Conn.WriteError(err.Error())
-			return
-		}
 	}
 
 	field := typeHashMarshalField(key, ctx.args[2])
@@ -143,7 +143,7 @@ func hgetCommandFunc(ctx Context) {
 
 func hexistsCommandFunc(ctx Context) {
 	if len(ctx.args) != 3 {
-		ctx.Conn.WriteError(fmt.Sprintf(ErrWrongArgs, ctx.cmd))
+		ctx.Conn.WriteError(fmt.Sprintf(ErrWrongArgsN, len(ctx.args)-1, 2))
 		return
 	}
 
@@ -234,7 +234,7 @@ func hdelCommandFunc(ctx Context) {
 
 func hincrbyCommandFunc(ctx Context) {
 	if len(ctx.args) != 4 {
-		ctx.Conn.WriteError(fmt.Sprintf(ErrWrongArgs, ctx.cmd))
+		ctx.Conn.WriteError(fmt.Sprintf(ErrWrongArgsN, len(ctx.args)-1, 3))
 		return
 	}
 
