@@ -116,28 +116,18 @@ func (db *BadgerDB) Del(key [][]byte) error {
 	})
 }
 
-func (db *BadgerDB) Rename(key, newkey []byte) error {
+func (db *BadgerDB) Rename(key, newkey []byte, nx bool) error {
 	return db.storage.Update(func(txn *badger.Txn) error {
 		data, err := db.Get(key)
 		if err == badger.ErrKeyNotFound {
 			return errors.New("ERR no such key")
 		}
 
-		txn.Delete(key)
-		return txn.Set(newkey, data)
-	})
-}
-
-func (db *BadgerDB) RenameNX(key, newkey []byte) error {
-	return db.storage.Update(func(txn *badger.Txn) error {
-		data, err := db.Get(key)
-		if err != nil {
-			return errors.New("ERR no such key")
-		}
-
-		data2, err := db.Get(newkey)
-		if err == nil && data2 != nil {
-			return errors.New("ERR newkey is exist")
+		if nx {
+			data, err := db.Get(newkey)
+			if err == nil && data != nil {
+				return errors.New("ERR newkey is exist")
+			}
 		}
 
 		txn.Delete(key)

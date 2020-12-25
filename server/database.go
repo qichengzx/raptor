@@ -77,7 +77,7 @@ func renameCommandFunc(ctx Context) {
 		return
 	}
 
-	err := ctx.db.Rename(ctx.args[1], ctx.args[2])
+	err := ctx.db.Rename(ctx.args[1], ctx.args[2], false)
 	if err != nil {
 		ctx.Conn.WriteError(err.Error())
 	} else {
@@ -91,7 +91,7 @@ func renamenxCommandFunc(ctx Context) {
 		return
 	}
 
-	err := ctx.db.RenameNX(ctx.args[1], ctx.args[2])
+	err := ctx.db.Rename(ctx.args[1], ctx.args[2], true)
 	if err != nil {
 		ctx.Conn.WriteInt(RespErr)
 	} else {

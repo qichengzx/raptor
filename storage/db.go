@@ -13,8 +13,7 @@ type DB interface {
 
 	//database
 	Del(key [][]byte) error
-	Rename(key, newkey []byte) error
-	RenameNX(key, newkey []byte) error
+	Rename(key, newkey []byte, nx bool) error
 	Scan(opts badger.ScannerOptions) error
 	FlushDB() error
 
