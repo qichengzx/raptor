@@ -22,6 +22,9 @@ type DB interface {
 	ExpireAt(key []byte, timestamp int64) error
 	TTL(key []byte) (int64, error)
 	Persist(key []byte) error
+
+	//server
+	Sync()
 }
 
 type ObjectType []byte

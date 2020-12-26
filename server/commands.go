@@ -77,5 +77,9 @@ var (
 		//DEBUG
 		cmdPing: pingCommandFunc,
 		cmdEcho: echoCommandFunc,
+
+		//SERVER
+		cmdSave:   saveCommandFunc,
+		cmdBgSave: bgsaveCommandFunc,
 	}
 )

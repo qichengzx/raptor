@@ -261,3 +261,7 @@ func (db *BadgerDB) Persist(key []byte) error {
 		return txn.SetEntry(e)
 	})
 }
+
+func (db *BadgerDB) Sync() {
+	db.storage.Sync()
+}

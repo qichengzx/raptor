@@ -5,6 +5,7 @@ const (
 	RespPong = "PONG"
 	RespSucc = 1
 	RespErr  = 0
+	RespSync = "Background saving started"
 
 	ErrTypeNone    = "none"
 	ErrKeyNotExist = "Key not found"
