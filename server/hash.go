@@ -16,6 +16,7 @@ const (
 	cmdHExists = "hexists"
 	cmdHDel    = "hdel"
 	cmdHLen    = "hlen"
+	cmdHStrLen = "hstrlen"
 	cmdHIncrby = "hincrby"
 	cmdHGetall = "hgetall"
 	cmdHMSet   = "hmset"
@@ -312,6 +313,33 @@ func hlenCommandFunc(ctx Context) {
 	}
 
 	ctx.Conn.WriteInt(int(hashSize))
+}
+
+func hstrlenCommandFunc(ctx Context) {
+	if len(ctx.args) != 3 {
+		ctx.Conn.WriteError(fmt.Sprintf(ErrWrongArgs, ctx.cmd))
+		return
+	}
+
+	_, err := typeHashGetMeta(ctx, ctx.args[1])
+	if err != nil {
+		if err.Error() != ErrKeyNotExist {
+			ctx.Conn.WriteError(err.Error())
+			return
+		} else {
+			ctx.Conn.WriteInt(0)
+			return
+		}
+	}
+
+	field := typeHashMarshalField(ctx.args[1], ctx.args[2])
+	v, err := ctx.db.Get(field)
+	if err != nil {
+		ctx.Conn.WriteInt(0)
+		return
+	}
+
+	ctx.Conn.WriteInt(len(string(v)))
 }
 
 func hgetallCommandFunc(ctx Context) {
