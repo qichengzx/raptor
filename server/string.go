@@ -120,7 +120,7 @@ func getCommandFunc(ctx Context) {
 	if ok != nil {
 		ctx.Conn.WriteNull()
 	} else {
-		ctx.Conn.WriteBulk(val[1:])
+		ctx.Conn.WriteString(string(val[1:]))
 	}
 }
 
@@ -140,7 +140,7 @@ func getsetCommandFunc(ctx Context) {
 	if err != nil {
 		ctx.Conn.WriteNull()
 	} else {
-		ctx.Conn.WriteBulk(val[1:])
+		ctx.Conn.WriteString(string(val[1:]))
 	}
 }
 
@@ -397,7 +397,7 @@ func mgetCommandFunc(ctx Context) {
 		if v == nil {
 			ctx.Conn.WriteNull()
 		} else {
-			ctx.Conn.WriteBulk(v)
+			ctx.Conn.WriteString(string(v))
 		}
 	}
 }
