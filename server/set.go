@@ -91,7 +91,11 @@ func sismemberCommandFunc(ctx Context) {
 	var key = ctx.args[1]
 	_, err := typeSetGetMeta(ctx, key)
 	if err != nil {
-		ctx.Conn.WriteError(err.Error())
+		if err.Error() != ErrKeyNotExist {
+			ctx.Conn.WriteError(err.Error())
+			return
+		}
+		ctx.Conn.WriteInt(0)
 		return
 	}
 	var keyLen = uint32(len(key))
@@ -124,7 +128,11 @@ func spopCommandFunc(ctx Context) {
 	var key = ctx.args[1]
 	metaValue, err := typeSetGetMeta(ctx, key)
 	if err != nil {
-		ctx.Conn.WriteError(err.Error())
+		if err.Error() != ErrKeyNotExist {
+			ctx.Conn.WriteError(err.Error())
+			return
+		}
+		ctx.Conn.WriteNull()
 		return
 	}
 
@@ -181,7 +189,11 @@ func srandmemberCommandFunc(ctx Context) {
 	var key = ctx.args[1]
 	_, err := typeSetGetMeta(ctx, key)
 	if err != nil {
-		ctx.Conn.WriteError(err.Error())
+		if err.Error() != ErrKeyNotExist {
+			ctx.Conn.WriteError(err.Error())
+			return
+		}
+		ctx.Conn.WriteNull()
 		return
 	}
 
@@ -220,7 +232,11 @@ func sremCommandFunc(ctx Context) {
 	var key = ctx.args[1]
 	metaValue, err := typeSetGetMeta(ctx, key)
 	if err != nil {
-		ctx.Conn.WriteError(err.Error())
+		if err.Error() != ErrKeyNotExist {
+			ctx.Conn.WriteError(err.Error())
+			return
+		}
+		ctx.Conn.WriteError(ErrEmpty)
 		return
 	}
 
@@ -279,7 +295,11 @@ func scardCommandFunc(ctx Context) {
 
 	metaValue, err := typeSetGetMeta(ctx, ctx.args[1])
 	if err != nil {
-		ctx.Conn.WriteError(err.Error())
+		if err.Error() != ErrKeyNotExist {
+			ctx.Conn.WriteError(err.Error())
+			return
+		}
+		ctx.Conn.WriteInt(0)
 		return
 	}
 
@@ -289,7 +309,6 @@ func scardCommandFunc(ctx Context) {
 	}
 
 	ctx.Conn.WriteInt(int(setSize))
-	return
 }
 
 func smembersCommandFunc(ctx Context) {
@@ -301,7 +320,11 @@ func smembersCommandFunc(ctx Context) {
 	var key = ctx.args[1]
 	_, err := typeSetGetMeta(ctx, ctx.args[1])
 	if err != nil {
-		ctx.Conn.WriteError(err.Error())
+		if err.Error() != ErrKeyNotExist {
+			ctx.Conn.WriteError(err.Error())
+			return
+		}
+		ctx.Conn.WriteError(ErrEmpty)
 		return
 	}
 
