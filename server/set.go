@@ -17,6 +17,7 @@ const (
 	cmdSRem        = "srem"
 	cmdSCard       = "scard"
 	cmdSMembers    = "smembers"
+	cmdSUnion      = "sunion"
 )
 
 const (
@@ -333,6 +334,37 @@ func smembersCommandFunc(ctx Context) {
 	ctx.Conn.WriteArray(len(members))
 	for _, member := range members {
 		ctx.Conn.WriteBulk(member[memberPos:])
+	}
+}
+
+func sunionCommandFunc(ctx Context) {
+	if len(ctx.args) < 2 {
+		ctx.Conn.WriteError(fmt.Sprintf(ErrWrongArgs, ctx.cmd))
+		return
+	}
+
+	var union [][]byte
+	var check = map[string]bool{}
+
+	for _, key := range ctx.args[1:] {
+		var memberPos = typeSetSize + typeSetKeySize + uint32(len(key))
+		members := typeSetScan(ctx, key, 0)
+		for _, member := range members {
+			if _, ok := check[string(member[memberPos:])]; !ok {
+				check[string(member[memberPos:])] = true
+				union = append(union, member[memberPos:])
+			}
+		}
+	}
+
+	if len(union) == 0 {
+		ctx.Conn.WriteError(ErrEmpty)
+		return
+	}
+
+	ctx.WriteArray(len(union))
+	for _, member := range union {
+		ctx.Conn.WriteBulk(member)
 	}
 }
 

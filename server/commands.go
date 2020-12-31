@@ -42,6 +42,7 @@ var (
 		cmdSRem:        sremCommandFunc,
 		cmdSCard:       scardCommandFunc,
 		cmdSMembers:    smembersCommandFunc,
+		cmdSUnion:      sunionCommandFunc,
 
 		//HASH
 		cmdHSet:    hsetCommandFunc,
