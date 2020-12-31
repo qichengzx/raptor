@@ -347,6 +347,14 @@ func sunionCommandFunc(ctx Context) {
 	var check = map[string]bool{}
 
 	for _, key := range ctx.args[1:] {
+		_, err := typeSetGetMeta(ctx, key)
+		if err != nil {
+			if err.Error() != ErrKeyNotExist {
+				ctx.Conn.WriteError(err.Error())
+				return
+			}
+		}
+
 		var memberPos = typeSetSize + typeSetKeySize + uint32(len(key))
 		members := typeSetScan(ctx, key, 0)
 		for _, member := range members {
