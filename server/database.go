@@ -28,21 +28,9 @@ func delCommandFunc(ctx Context) {
 
 	var keysToDel [][]byte
 	for _, key := range ctx.args[1:] {
-		data, err := ctx.db.Get(key)
-		if err != nil {
-			ctx.Conn.WriteInt(0)
-			return
-		}
-
-		keysToDel = append(keysToDel, key)
-		switch string(data[:1]) {
-		case storage.ObjectHash:
-			fields, _ := typeHashScan(ctx, key, 0)
-			keysToDel = append(keysToDel, fields...)
-
-		case storage.ObjectSet:
-			members := typeSetScan(ctx, key, 0)
-			keysToDel = append(keysToDel, members...)
+		keys := scan(ctx, key)
+		if len(keys) > 0 {
+			keysToDel = append(keysToDel, keys...)
 		}
 	}
 
@@ -135,4 +123,25 @@ func typeCommandFunc(ctx Context) {
 
 	ctx.Conn.WriteString(ErrTypeNone)
 	return
+}
+
+func scan(ctx Context, key []byte) [][]byte {
+	var keys [][]byte
+	data, err := ctx.db.Get(key)
+	if err != nil {
+		return nil
+	}
+
+	keys = append(keys, key)
+	switch string(data[:1]) {
+	case storage.ObjectHash:
+		fields, _ := typeHashScan(ctx, key, 0)
+		keys = append(keys, fields...)
+
+	case storage.ObjectSet:
+		members := typeSetScan(ctx, key, 0)
+		keys = append(keys, members...)
+	}
+
+	return keys
 }
