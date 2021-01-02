@@ -43,6 +43,7 @@ var (
 		cmdSCard:       scardCommandFunc,
 		cmdSMembers:    smembersCommandFunc,
 		cmdSUnion:      sunionCommandFunc,
+		cmdSUnionStore: sunionstoreCommandFunc,
 
 		//HASH
 		cmdHSet:    hsetCommandFunc,

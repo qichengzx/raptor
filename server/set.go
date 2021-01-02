@@ -18,6 +18,7 @@ const (
 	cmdSCard       = "scard"
 	cmdSMembers    = "smembers"
 	cmdSUnion      = "sunion"
+	cmdSUnionStore = "sunionstore"
 )
 
 const (
@@ -374,6 +375,70 @@ func sunionCommandFunc(ctx Context) {
 	for _, member := range union {
 		ctx.Conn.WriteBulk(member)
 	}
+}
+
+func sunionstoreCommandFunc(ctx Context) {
+	if len(ctx.args) < 3 {
+		ctx.Conn.WriteError(fmt.Sprintf(ErrWrongArgs, ctx.cmd))
+		return
+	}
+
+	var union [][]byte
+	var check = make(map[string]struct{})
+
+	for _, key := range ctx.args[2:] {
+		var memberPos = typeSetSize + typeSetKeySize + uint32(len(key))
+		members := typeSetScan(ctx, key, 0)
+		for _, member := range members {
+			if _, ok := check[string(member[memberPos:])]; !ok {
+				check[string(member[memberPos:])] = struct{}{}
+				union = append(union, member[memberPos:])
+			}
+		}
+	}
+
+	if len(union) == 0 {
+		ctx.Conn.WriteError(ErrEmpty)
+		return
+	}
+
+	var keysToDel [][]byte
+	var dstkey = ctx.args[1]
+	keys := scan(ctx, dstkey)
+	if len(keys) > 0 {
+		keysToDel = append(keysToDel, keys...)
+		err := ctx.db.Del(keysToDel)
+		if err != nil {
+			ctx.Conn.WriteInt(0)
+			return
+		}
+	}
+
+	var keyLen = uint32(len(dstkey))
+	var keySize = make([]byte, typeSetKeySize)
+
+	binary.BigEndian.PutUint32(keySize, keyLen)
+	var cnt uint32 = 0
+	var memDefault = []byte(typeSetMemberDefault)
+	for _, member := range union {
+		memBuff := bytes.NewBuffer([]byte{})
+		memBuff.Write(typeSet)
+		memBuff.Write(keySize)
+		memBuff.Write(dstkey)
+		memBuff.Write(member)
+
+		err := ctx.db.Set(memBuff.Bytes(), memDefault, 0)
+		if err == nil {
+			cnt++
+		}
+	}
+	err := typeSetSaveMeta(ctx, dstkey, cnt)
+	if err != nil {
+		ctx.Conn.WriteInt(0)
+		return
+	}
+
+	ctx.Conn.WriteInt(len(union))
 }
 
 func typeSetGetMeta(ctx Context, key []byte) ([]byte, error) {
