@@ -19,6 +19,7 @@ const (
 	cmdSMembers    = "smembers"
 	cmdSUnion      = "sunion"
 	cmdSUnionStore = "sunionstore"
+	cmdSDiff       = "sdiff"
 )
 
 const (
@@ -439,6 +440,39 @@ func sunionstoreCommandFunc(ctx Context) {
 	}
 
 	ctx.Conn.WriteInt(len(union))
+}
+
+func sdiffCommandFunc(ctx Context) {
+	if len(ctx.args) < 2 {
+		ctx.Conn.WriteError(fmt.Sprintf(ErrWrongArgs, ctx.cmd))
+		return
+	}
+
+	var check = make(map[string]int)
+	for _, key := range ctx.args[1:] {
+		var memberPos = typeSetSize + typeSetKeySize + uint32(len(key))
+		members := typeSetScan(ctx, key, 0)
+		for _, member := range members {
+			check[string(member[memberPos:])]++
+		}
+	}
+
+	var diff []string
+	for member, cnt := range check {
+		if cnt == 1 {
+			diff = append(diff, member)
+		}
+	}
+
+	if len(diff) == 0 {
+		ctx.Conn.WriteError(ErrEmpty)
+		return
+	}
+
+	ctx.WriteArray(len(diff))
+	for _, member := range diff {
+		ctx.Conn.WriteString(member)
+	}
 }
 
 func typeSetGetMeta(ctx Context, key []byte) ([]byte, error) {

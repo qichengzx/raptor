@@ -44,6 +44,7 @@ var (
 		cmdSMembers:    smembersCommandFunc,
 		cmdSUnion:      sunionCommandFunc,
 		cmdSUnionStore: sunionstoreCommandFunc,
+		cmdSDiff:       sdiffCommandFunc,
 
 		//HASH
 		cmdHSet:    hsetCommandFunc,
