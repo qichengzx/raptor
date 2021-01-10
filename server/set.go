@@ -179,7 +179,7 @@ func spopCommandFunc(ctx Context) {
 
 	ctx.Conn.WriteArray(len(members))
 	for _, member := range members {
-		ctx.Conn.WriteBulk(member[memberPos:])
+		ctx.Conn.WriteString(string(member[memberPos:]))
 	}
 }
 
@@ -222,7 +222,7 @@ func srandmemberCommandFunc(ctx Context) {
 
 	ctx.Conn.WriteArray(len(members))
 	for _, member := range members {
-		ctx.Conn.WriteBulk(member[memberPos:])
+		ctx.Conn.WriteString(string(member[memberPos:]))
 	}
 }
 
@@ -287,7 +287,6 @@ func sremCommandFunc(ctx Context) {
 	}
 
 	ctx.Conn.WriteInt(lenToDel)
-	return
 }
 
 func scardCommandFunc(ctx Context) {
@@ -335,7 +334,7 @@ func smembersCommandFunc(ctx Context) {
 	members := typeSetScan(ctx, key, 0)
 	ctx.Conn.WriteArray(len(members))
 	for _, member := range members {
-		ctx.Conn.WriteBulk(member[memberPos:])
+		ctx.Conn.WriteString(string(member[memberPos:]))
 	}
 }
 
@@ -374,7 +373,7 @@ func sunionCommandFunc(ctx Context) {
 
 	ctx.WriteArray(len(union))
 	for _, member := range union {
-		ctx.Conn.WriteBulk(member)
+		ctx.Conn.WriteString(string(member))
 	}
 }
 
@@ -403,10 +402,10 @@ func sunionstoreCommandFunc(ctx Context) {
 		return
 	}
 
-	var keysToDel [][]byte
 	var dstkey = ctx.args[1]
 	keys := scan(ctx, dstkey)
 	if len(keys) > 0 {
+		var keysToDel [][]byte
 		keysToDel = append(keysToDel, keys...)
 		err := ctx.db.Del(keysToDel)
 		if err != nil {
