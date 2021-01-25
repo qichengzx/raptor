@@ -96,7 +96,6 @@ func psetexCommandFunc(ctx Context) {
 		return
 	}
 	var seconds = millisecond / 1000
-
 	if seconds < 1 {
 		ctx.Conn.WriteError(ErrExpireTime)
 		return
@@ -131,7 +130,7 @@ func getsetCommandFunc(ctx Context) {
 	}
 
 	val, err := ctx.db.Get(ctx.args[1])
-	if err != nil && err.Error() != "Key not found" {
+	if err != nil {
 		ctx.Conn.WriteNull()
 		return
 	}
