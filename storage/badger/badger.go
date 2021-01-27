@@ -259,3 +259,7 @@ func (db *BadgerDB) Persist(key []byte) error {
 func (db *BadgerDB) Sync() {
 	db.storage.Sync()
 }
+
+func (db *BadgerDB) ClearPrefix(prefix []byte) error {
+	return db.storage.DropPrefix(prefix)
+}
