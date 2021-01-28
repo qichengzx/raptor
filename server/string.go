@@ -157,9 +157,13 @@ func strlenCommandFunc(ctx Context) {
 	val, ok := ctx.db.Get(ctx.args[1])
 	if ok != nil {
 		ctx.Conn.WriteInt(0)
-	} else {
-		ctx.Conn.WriteInt(len(string(val[1:])))
+		return
 	}
+	if len(val) > 1 && string(val[0]) != string(typeString) {
+		ctx.Conn.WriteError(ErrWrongType)
+		return
+	}
+	ctx.Conn.WriteInt(len(string(val[1:])))
 }
 
 func appendCommandFunc(ctx Context) {
