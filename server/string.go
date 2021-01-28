@@ -135,6 +135,11 @@ func getsetCommandFunc(ctx Context) {
 		return
 	}
 
+	if len(val) > 1 && string(val[0]) != string(typeString) {
+		ctx.Conn.WriteError(ErrWrongType)
+		return
+	}
+
 	err = ctx.db.Set(ctx.args[1], append(typeString, ctx.args[2]...), 0)
 	if err != nil {
 		ctx.Conn.WriteNull()
