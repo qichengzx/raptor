@@ -1,6 +1,7 @@
 package server
 
 import (
+	"errors"
 	"fmt"
 	"strconv"
 )
@@ -46,9 +47,9 @@ func setnxCommandFunc(ctx Context) {
 		return
 	}
 
-	val, err := ctx.db.Get(ctx.args[1])
-	if err == nil && val != nil {
-		ctx.Conn.WriteInt(RespErr)
+	_, err := typeStringGetVal(ctx, ctx.args[1])
+	if err != nil {
+		ctx.Conn.WriteError(err.Error())
 		return
 	}
 
@@ -115,9 +116,14 @@ func getCommandFunc(ctx Context) {
 		return
 	}
 
-	val, ok := ctx.db.Get(ctx.args[1])
-	if ok != nil {
-		ctx.Conn.WriteNull()
+	val, err := typeStringGetVal(ctx, ctx.args[1])
+	if err != nil {
+		if err.Error() == ErrKeyExist {
+			ctx.Conn.WriteNull()
+			return
+		}
+
+		ctx.Conn.WriteError(err.Error())
 	} else {
 		ctx.Conn.WriteString(string(val[1:]))
 	}
@@ -129,15 +135,14 @@ func getsetCommandFunc(ctx Context) {
 		return
 	}
 
-	val, err := ctx.db.Get(ctx.args[1])
+	val, err := typeStringGetVal(ctx, ctx.args[1])
 	if err != nil {
-		ctx.Conn.WriteNull()
-		return
-	}
+		if err.Error() == ErrKeyExist {
+			ctx.Conn.WriteNull()
+			return
+		}
 
-	if len(val) > 1 && string(val[0]) != string(typeString) {
-		ctx.Conn.WriteError(ErrWrongType)
-		return
+		ctx.Conn.WriteError(err.Error())
 	}
 
 	err = ctx.db.Set(ctx.args[1], append(typeString, ctx.args[2]...), 0)
@@ -154,15 +159,16 @@ func strlenCommandFunc(ctx Context) {
 		return
 	}
 
-	val, ok := ctx.db.Get(ctx.args[1])
-	if ok != nil {
-		ctx.Conn.WriteInt(0)
-		return
+	val, err := typeStringGetVal(ctx, ctx.args[1])
+	if err != nil {
+		if err.Error() == ErrKeyExist {
+			ctx.Conn.WriteNull()
+			return
+		}
+
+		ctx.Conn.WriteError(err.Error())
 	}
-	if len(val) > 1 && string(val[0]) != string(typeString) {
-		ctx.Conn.WriteError(ErrWrongType)
-		return
-	}
+
 	ctx.Conn.WriteInt(len(string(val[1:])))
 }
 
@@ -408,4 +414,19 @@ func mgetCommandFunc(ctx Context) {
 			ctx.Conn.WriteString(string(v))
 		}
 	}
+}
+
+func typeStringGetVal(ctx Context, key []byte) ([]byte, error) {
+	val, err := ctx.db.Get(key)
+	if err != nil && err.Error() == ErrKeyNotExist {
+		return nil, err
+	}
+
+	if val != nil && len(val) > 1 {
+		if string(val[0]) != string(typeString) {
+			return nil, errors.New(ErrWrongType)
+		}
+	}
+
+	return val, nil
 }
