@@ -47,9 +47,14 @@ func setnxCommandFunc(ctx Context) {
 		return
 	}
 
-	_, err := typeStringGetVal(ctx, ctx.args[1])
-	if err != nil {
+	val, err := typeStringGetVal(ctx, ctx.args[1])
+	if err != nil && err.Error() != ErrKeyNotExist {
 		ctx.Conn.WriteError(err.Error())
+		return
+	}
+
+	if val != nil {
+		ctx.Conn.WriteInt(RespErr)
 		return
 	}
 
@@ -118,7 +123,7 @@ func getCommandFunc(ctx Context) {
 
 	val, err := typeStringGetVal(ctx, ctx.args[1])
 	if err != nil {
-		if err.Error() == ErrKeyExist {
+		if err.Error() == ErrKeyNotExist {
 			ctx.Conn.WriteNull()
 			return
 		}
@@ -136,12 +141,7 @@ func getsetCommandFunc(ctx Context) {
 	}
 
 	val, err := typeStringGetVal(ctx, ctx.args[1])
-	if err != nil {
-		if err.Error() == ErrKeyExist {
-			ctx.Conn.WriteNull()
-			return
-		}
-
+	if err != nil && err.Error() != ErrKeyNotExist {
 		ctx.Conn.WriteError(err.Error())
 	}
 
@@ -161,8 +161,8 @@ func strlenCommandFunc(ctx Context) {
 
 	val, err := typeStringGetVal(ctx, ctx.args[1])
 	if err != nil {
-		if err.Error() == ErrKeyExist {
-			ctx.Conn.WriteNull()
+		if err.Error() == ErrKeyNotExist {
+			ctx.Conn.WriteInt(0)
 			return
 		}
 
