@@ -178,7 +178,11 @@ func appendCommandFunc(ctx Context) {
 		return
 	}
 
-	val, err := ctx.db.Get(ctx.args[1])
+	val, err := typeStringGetVal(ctx, ctx.args[1])
+	if err != nil && err.Error() != ErrKeyNotExist {
+		ctx.Conn.WriteError(err.Error())
+		return
+	}
 	if err != nil && val == nil {
 		val = append(val, typeString...)
 	}
@@ -198,7 +202,11 @@ func incrCommandFunc(ctx Context) {
 		return
 	}
 
-	val, err := ctx.db.Get(ctx.args[1])
+	val, err := typeStringGetVal(ctx, ctx.args[1])
+	if err != nil && err.Error() != ErrKeyNotExist {
+		ctx.Conn.WriteError(err.Error())
+		return
+	}
 	if err != nil {
 		val = []byte("0")
 	}
