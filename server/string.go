@@ -239,7 +239,11 @@ func incrByCommandFunc(ctx Context) {
 		return
 	}
 
-	val, err := ctx.db.Get(ctx.args[1])
+	val, err := typeStringGetVal(ctx, ctx.args[1])
+	if err != nil && err.Error() != ErrKeyNotExist {
+		ctx.Conn.WriteError(err.Error())
+		return
+	}
 	if err != nil {
 		val = []byte("0")
 	}
@@ -266,7 +270,11 @@ func decrCommandFunc(ctx Context) {
 		return
 	}
 
-	val, err := ctx.db.Get(ctx.args[1])
+	val, err := typeStringGetVal(ctx, ctx.args[1])
+	if err != nil && err.Error() != ErrKeyNotExist {
+		ctx.Conn.WriteError(err.Error())
+		return
+	}
 	if err != nil {
 		val = []byte("0")
 	}
@@ -299,7 +307,11 @@ func decrByCommandFunc(ctx Context) {
 		return
 	}
 
-	val, err := ctx.db.Get(ctx.args[1])
+	val, err := typeStringGetVal(ctx, ctx.args[1])
+	if err != nil && err.Error() != ErrKeyNotExist {
+		ctx.Conn.WriteError(err.Error())
+		return
+	}
 	if err != nil {
 		val = []byte("0")
 	}
@@ -331,7 +343,11 @@ func incrByFloatCommandFunc(ctx Context) {
 		return
 	}
 
-	val, err := ctx.db.Get(ctx.args[1])
+	val, err := typeStringGetVal(ctx, ctx.args[1])
+	if err != nil && err.Error() != ErrKeyNotExist {
+		ctx.Conn.WriteError(err.Error())
+		return
+	}
 	if err != nil {
 		val = []byte("0")
 	}
