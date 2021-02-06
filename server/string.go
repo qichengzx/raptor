@@ -82,7 +82,7 @@ func setexCommandFunc(ctx Context) {
 		return
 	}
 
-	err = ctx.db.Set(ctx.args[1], append(typeString, ctx.args[2]...), seconds)
+	err = ctx.db.Set(ctx.args[1], append(typeString, ctx.args[3]...), seconds)
 	if err == nil {
 		ctx.Conn.WriteString(RespOK)
 	} else {
