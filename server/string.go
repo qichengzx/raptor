@@ -130,7 +130,7 @@ func getCommandFunc(ctx Context) {
 
 		ctx.Conn.WriteError(err.Error())
 	} else {
-		ctx.Conn.WriteString(string(val[1:]))
+		ctx.Conn.WriteBulk(val[1:])
 	}
 }
 
@@ -154,7 +154,7 @@ func getsetCommandFunc(ctx Context) {
 		ctx.Conn.WriteNull()
 		return
 	}
-	ctx.Conn.WriteString(string(val[1:]))
+	ctx.Conn.WriteBulk(val[1:])
 }
 
 func strlenCommandFunc(ctx Context) {
@@ -439,7 +439,7 @@ func mgetCommandFunc(ctx Context) {
 		if v == nil {
 			ctx.Conn.WriteNull()
 		} else {
-			ctx.Conn.WriteString(string(v))
+			ctx.Conn.WriteBulk(v)
 		}
 	}
 }

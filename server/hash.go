@@ -80,14 +80,13 @@ func hsetnxCommandFunc(ctx Context) {
 	}
 
 	var key = ctx.args[1]
-	var hashSize uint32 = 0
-
 	metaValue, err := typeHashGetMeta(ctx, key)
 	if err != nil && err.Error() != ErrKeyNotExist {
 		ctx.Conn.WriteError(err.Error())
 		return
 	}
 
+	var hashSize uint32 = 0
 	if metaValue != nil {
 		hashSize = binary.BigEndian.Uint32(metaValue[1:5])
 	}
