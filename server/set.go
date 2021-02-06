@@ -321,12 +321,14 @@ func smembersCommandFunc(ctx Context) {
 	}
 
 	var key = ctx.args[1]
-	_, err := typeSetGetMeta(ctx, ctx.args[1])
+	meta, err := typeSetGetMeta(ctx, ctx.args[1])
 	if err != nil {
-		if err.Error() != ErrKeyNotExist {
+		if err.Error() != ErrKeyNotExist && err.Error() != ErrWrongType {
 			ctx.Conn.WriteError(err.Error())
 			return
 		}
+	}
+	if meta == nil {
 		ctx.Conn.WriteError(ErrEmpty)
 		return
 	}
