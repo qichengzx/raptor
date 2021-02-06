@@ -148,9 +148,13 @@ func getsetCommandFunc(ctx Context) {
 	err = ctx.db.Set(ctx.args[1], append(typeString, ctx.args[2]...), 0)
 	if err != nil {
 		ctx.Conn.WriteNull()
-	} else {
-		ctx.Conn.WriteString(string(val[1:]))
+		return
 	}
+	if val == nil {
+		ctx.Conn.WriteNull()
+		return
+	}
+	ctx.Conn.WriteString(string(val[1:]))
 }
 
 func strlenCommandFunc(ctx Context) {
