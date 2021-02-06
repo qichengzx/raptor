@@ -188,7 +188,7 @@ func appendCommandFunc(ctx Context) {
 		return
 	}
 	if err != nil && val == nil {
-		val = append(val, typeString...)
+		val = typeString
 	}
 
 	val = append(val, ctx.args[2]...)
