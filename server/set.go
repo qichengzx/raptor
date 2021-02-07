@@ -83,7 +83,6 @@ func saddCommandFunc(ctx Context) {
 	}
 
 	ctx.Conn.WriteInt64(int64(cnt))
-	return
 }
 
 func sismemberCommandFunc(ctx Context) {
@@ -180,7 +179,7 @@ func spopCommandFunc(ctx Context) {
 
 	ctx.Conn.WriteArray(len(members))
 	for _, member := range members {
-		ctx.Conn.WriteString(string(member[memberPos:]))
+		ctx.Conn.WriteBulk(member[memberPos:])
 	}
 }
 
@@ -223,7 +222,7 @@ func srandmemberCommandFunc(ctx Context) {
 
 	ctx.Conn.WriteArray(len(members))
 	for _, member := range members {
-		ctx.Conn.WriteString(string(member[memberPos:]))
+		ctx.Conn.WriteBulk(member[memberPos:])
 	}
 }
 
@@ -337,7 +336,7 @@ func smembersCommandFunc(ctx Context) {
 	members := typeSetScan(ctx, key, 0)
 	ctx.Conn.WriteArray(len(members))
 	for _, member := range members {
-		ctx.Conn.WriteString(string(member[memberPos:]))
+		ctx.Conn.WriteBulk(member[memberPos:])
 	}
 }
 
@@ -376,7 +375,7 @@ func sunionCommandFunc(ctx Context) {
 
 	ctx.WriteArray(len(union))
 	for _, member := range union {
-		ctx.Conn.WriteString(string(member))
+		ctx.Conn.WriteBulk(member)
 	}
 }
 
@@ -459,10 +458,10 @@ func sdiffCommandFunc(ctx Context) {
 		}
 	}
 
-	var diff []string
+	var diff [][]byte
 	for member, cnt := range check {
 		if cnt == 1 {
-			diff = append(diff, member)
+			diff = append(diff, []byte(member))
 		}
 	}
 
@@ -473,7 +472,7 @@ func sdiffCommandFunc(ctx Context) {
 
 	ctx.WriteArray(len(diff))
 	for _, member := range diff {
-		ctx.Conn.WriteString(member)
+		ctx.Conn.WriteBulk(member)
 	}
 }
 
