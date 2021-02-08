@@ -15,6 +15,7 @@ const (
 	cmdGetSet      = "getset"
 	cmdStrlen      = "strlen"
 	cmdAppend      = "append"
+	cmdGetRange    = "getrange"
 	cmdIncr        = "incr"
 	cmdIncrBy      = "incrby"
 	cmdDecr        = "decr"
@@ -198,6 +199,46 @@ func appendCommandFunc(ctx Context) {
 	} else {
 		ctx.Conn.WriteInt(0)
 	}
+}
+
+func getrangeCommandFunc(ctx Context) {
+	if len(ctx.args) != 4 {
+		ctx.Conn.WriteError(fmt.Sprintf(ErrWrongArgs, ctx.cmd))
+		return
+	}
+
+	val, err := typeStringGetVal(ctx, ctx.args[1])
+	if err != nil && err.Error() != ErrKeyNotExist {
+		ctx.Conn.WriteError(err.Error())
+		return
+	}
+	if val == nil {
+		ctx.Conn.WriteString("")
+		return
+	}
+
+	offset, err := strconv.ParseInt(string(ctx.args[2]), 10, 64)
+	if err != nil {
+		ctx.Conn.WriteError(ErrValue)
+		return
+	}
+	end, err := strconv.ParseInt(string(ctx.args[3]), 10, 64)
+	if err != nil {
+		ctx.Conn.WriteError(ErrValue)
+		return
+	}
+
+	length := int64(len(val[1:]))
+	if offset > length {
+		ctx.Conn.WriteString("")
+		return
+	}
+
+	if end >= length {
+		ctx.Conn.WriteBulk(val[offset+1:])
+		return
+	}
+	ctx.Conn.WriteBulk(val[offset+1 : end+2])
 }
 
 func incrCommandFunc(ctx Context) {
