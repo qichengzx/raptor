@@ -5,6 +5,7 @@ import (
 	"encoding/binary"
 	"errors"
 	"fmt"
+	"github.com/qichengzx/raptor/storage/badger"
 )
 
 const (
@@ -62,6 +63,35 @@ func zaddCommandFunc(ctx Context) {
 	}
 
 	ctx.Conn.WriteInt64(int64(cnt))
+}
+
+func typeZSetScan(ctx Context, key []byte, cnt int64) ([][]byte, [][]byte) {
+	var members [][]byte
+	var score [][]byte
+	var scanFunc = func(k, v []byte) {
+		members = append(members, k)
+		score = append(score, v)
+	}
+
+	var keySize = make([]byte, typeZSetKeySize)
+	var keyLen = uint32(len(key))
+	binary.BigEndian.PutUint32(keySize, keyLen)
+
+	prefixBuff := bytes.NewBuffer([]byte{})
+	prefixBuff.Write(typeZSet)
+	prefixBuff.Write(keySize)
+	prefixBuff.Write(key)
+	fmt.Println("prefixBuff->", string(prefixBuff.Bytes()))
+
+	scanOpts := badger.ScannerOptions{
+		Prefix:      prefixBuff.Bytes(),
+		FetchValues: true,
+		Handler:     scanFunc,
+		Count:       cnt,
+	}
+	ctx.db.Scan(scanOpts)
+
+	return members, score
 }
 
 func typeZSetMarshalMemeber(key, member []byte) []byte {
