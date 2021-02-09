@@ -48,6 +48,9 @@ var (
 		cmdSDiff:       sdiffCommandFunc,
 		cmdSDiffStore:  sdiffstoreCommandFunc,
 
+		//ZSET
+		cmdZAdd: zaddCommandFunc,
+
 		//HASH
 		cmdHSet:    hsetCommandFunc,
 		cmdHSetNX:  hsetnxCommandFunc,
