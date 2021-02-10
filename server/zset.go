@@ -9,7 +9,8 @@ import (
 )
 
 const (
-	cmdZAdd = "zadd"
+	cmdZAdd   = "zadd"
+	cmdZScore = "zscore"
 )
 
 const (
@@ -65,6 +66,31 @@ func zaddCommandFunc(ctx Context) {
 	ctx.Conn.WriteInt64(int64(cnt))
 }
 
+func zscoreCommandFunc(ctx Context) {
+	if len(ctx.args) != 3 {
+		ctx.Conn.WriteError(fmt.Sprintf(ErrWrongArgs, ctx.cmd))
+		return
+	}
+
+	_, err := typeZSetGetMeata(ctx, ctx.args[1])
+	if err != nil {
+		if err.Error() == ErrKeyNotExist {
+			ctx.Conn.WriteNull()
+			return
+		}
+		ctx.Conn.WriteError(err.Error())
+		return
+	}
+
+	member := typeZSetMarshalMemeber(ctx.args[1], ctx.args[2])
+	score, err := ctx.db.Get(member)
+	if err != nil {
+		ctx.Conn.WriteNull()
+		return
+	}
+
+	ctx.Conn.WriteBulk(score)
+}
 func typeZSetScan(ctx Context, key []byte, cnt int64) ([][]byte, [][]byte) {
 	var members [][]byte
 	var score [][]byte
@@ -81,7 +107,6 @@ func typeZSetScan(ctx Context, key []byte, cnt int64) ([][]byte, [][]byte) {
 	prefixBuff.Write(typeZSet)
 	prefixBuff.Write(keySize)
 	prefixBuff.Write(key)
-	fmt.Println("prefixBuff->", string(prefixBuff.Bytes()))
 
 	scanOpts := badger.ScannerOptions{
 		Prefix:      prefixBuff.Bytes(),
