@@ -11,6 +11,7 @@ import (
 const (
 	cmdZAdd   = "zadd"
 	cmdZScore = "zscore"
+	cmdZCard  = "zcard"
 )
 
 const (
@@ -91,6 +92,31 @@ func zscoreCommandFunc(ctx Context) {
 
 	ctx.Conn.WriteBulk(score)
 }
+
+func zcardCommandFunc(ctx Context) {
+	if len(ctx.args) != 2 {
+		ctx.Conn.WriteError(fmt.Sprintf(ErrWrongArgs, ctx.cmd))
+		return
+	}
+
+	metaValue, err := typeZSetGetMeata(ctx, ctx.args[1])
+	if err != nil {
+		if err.Error() != ErrKeyNotExist {
+			ctx.Conn.WriteError(err.Error())
+			return
+		}
+		ctx.Conn.WriteInt(0)
+		return
+	}
+
+	var zsetSize uint32 = 0
+	if metaValue != nil {
+		zsetSize = binary.BigEndian.Uint32(metaValue[1:5])
+	}
+
+	ctx.Conn.WriteInt(int(zsetSize))
+}
+
 func typeZSetScan(ctx Context, key []byte, cnt int64) ([][]byte, [][]byte) {
 	var members [][]byte
 	var score [][]byte

@@ -51,6 +51,7 @@ var (
 		//ZSET
 		cmdZAdd:   zaddCommandFunc,
 		cmdZScore: zscoreCommandFunc,
+		cmdZCard:  zcardCommandFunc,
 
 		//HASH
 		cmdHSet:    hsetCommandFunc,
