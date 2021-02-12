@@ -12,6 +12,7 @@ const (
 	cmdZAdd   = "zadd"
 	cmdZScore = "zscore"
 	cmdZCard  = "zcard"
+	cmdZRem   = "zrem"
 )
 
 const (
@@ -115,6 +116,53 @@ func zcardCommandFunc(ctx Context) {
 	}
 
 	ctx.Conn.WriteInt(int(zsetSize))
+}
+
+func zremCommandFunc(ctx Context) {
+	if len(ctx.args) < 3 {
+		ctx.Conn.WriteError(fmt.Sprintf(ErrWrongArgs, ctx.cmd))
+		return
+	}
+
+	var key = ctx.args[1]
+	metaValue, err := typeZSetGetMeata(ctx, key)
+	if err != nil && err.Error() != ErrKeyNotExist {
+		ctx.Conn.WriteError(err.Error())
+		return
+	}
+
+	var zsetSize uint32 = 0
+	if metaValue != nil {
+		zsetSize = binary.BigEndian.Uint32(metaValue[1:5])
+	}
+
+	var cnt uint32 = 0
+	var keysToDel [][]byte
+	for i := 2; i <= len(ctx.args[1:]); i++ {
+		member := typeZSetMarshalMemeber(key, ctx.args[i])
+		score, err := ctx.db.Get(member)
+		if err != nil {
+			continue
+		}
+		scoreKey := typeZSetMarshalScore(key, score, ctx.args[i])
+		keysToDel = append(keysToDel, member, scoreKey)
+		cnt++
+	}
+
+	zsetSize -= cnt
+	if zsetSize == 0 {
+		keysToDel = append(keysToDel, key)
+	}
+	err = ctx.db.Del(keysToDel)
+	if zsetSize > 0 {
+		err = typeZSetSetMeta(ctx, key, zsetSize)
+		if err != nil {
+			ctx.Conn.WriteInt(0)
+			return
+		}
+	}
+
+	ctx.Conn.WriteInt64(int64(cnt))
 }
 
 func typeZSetScan(ctx Context, key []byte, cnt int64) ([][]byte, [][]byte) {
