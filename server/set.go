@@ -152,7 +152,6 @@ func spopCommandFunc(ctx Context) {
 			return
 		}
 	}
-	var memberPos = typeSetSize + typeSetKeySize + uint32(len(key))
 	members := typeSetScan(ctx, key, cnt)
 	var lenToDel = len(members)
 	if lenToDel > 0 {
@@ -174,6 +173,7 @@ func spopCommandFunc(ctx Context) {
 	}
 
 	ctx.Conn.WriteArray(len(members))
+	var memberPos = typeSetMemberPos(key)
 	for _, member := range members {
 		ctx.Conn.WriteBulk(member[memberPos:])
 	}
@@ -205,7 +205,7 @@ func srandmemberCommandFunc(ctx Context) {
 		}
 	}
 
-	var memberPos = typeSetSize + typeSetKeySize + uint32(len(key))
+	var memberPos = typeSetMemberPos(key)
 	members := typeSetScan(ctx, key, cnt)
 	if cnt == 1 {
 		if len(members) == 1 {
@@ -244,9 +244,8 @@ func sremCommandFunc(ctx Context) {
 		setSize = binary.BigEndian.Uint32(metaValue[1:5])
 	}
 
-	var keyLen = uint32(len(key))
 	var keySize = make([]byte, typeSetKeySize)
-	binary.BigEndian.PutUint32(keySize, keyLen)
+	binary.BigEndian.PutUint32(keySize, uint32(len(key)))
 	var memberToDel [][]byte
 	for _, member := range ctx.args[2:] {
 		memBuff := bytes.NewBuffer([]byte{})
@@ -328,7 +327,7 @@ func smembersCommandFunc(ctx Context) {
 		return
 	}
 
-	var memberPos = typeSetSize + typeSetKeySize + uint32(len(key))
+	var memberPos = typeSetMemberPos(key)
 	members := typeSetScan(ctx, key, 0)
 	ctx.Conn.WriteArray(len(members))
 	for _, member := range members {
@@ -354,7 +353,7 @@ func sunionCommandFunc(ctx Context) {
 			}
 		}
 
-		var memberPos = typeSetSize + typeSetKeySize + uint32(len(key))
+		var memberPos = typeSetMemberPos(key)
 		members := typeSetScan(ctx, key, 0)
 		for _, member := range members {
 			if _, ok := check[string(member[memberPos:])]; !ok {
@@ -385,7 +384,7 @@ func sunionstoreCommandFunc(ctx Context) {
 	var check = make(map[string]struct{})
 
 	for _, key := range ctx.args[2:] {
-		var memberPos = typeSetSize + typeSetKeySize + uint32(len(key))
+		var memberPos = typeSetMemberPos(key)
 		members := typeSetScan(ctx, key, 0)
 		for _, member := range members {
 			if _, ok := check[string(member[memberPos:])]; !ok {
@@ -446,7 +445,7 @@ func sdiffCommandFunc(ctx Context) {
 
 	var check = make(map[string]int)
 	for _, key := range ctx.args[1:] {
-		var memberPos = typeSetSize + typeSetKeySize + uint32(len(key))
+		var memberPos = typeSetMemberPos(key)
 		members := typeSetScan(ctx, key, 0)
 		for _, member := range members {
 			check[string(member[memberPos:])]++
@@ -479,7 +478,7 @@ func sdiffstoreCommandFunc(ctx Context) {
 
 	var check = make(map[string]int)
 	for _, key := range ctx.args[2:] {
-		var memberPos = typeSetSize + typeSetKeySize + uint32(len(key))
+		var memberPos = typeSetMemberPos(key)
 		members := typeSetScan(ctx, key, 0)
 		for _, member := range members {
 			check[string(member[memberPos:])]++
@@ -510,10 +509,8 @@ func sdiffstoreCommandFunc(ctx Context) {
 		}
 	}
 
-	var keyLen = uint32(len(dstkey))
 	var keySize = make([]byte, typeSetKeySize)
-
-	binary.BigEndian.PutUint32(keySize, keyLen)
+	binary.BigEndian.PutUint32(keySize, uint32(len(dstkey)))
 	var cnt uint32 = 0
 	for _, member := range diff {
 		memBuff := bytes.NewBuffer([]byte{})
@@ -584,6 +581,6 @@ func typeSetScan(ctx Context, key []byte, cnt int64) [][]byte {
 	return members
 }
 
-func typeSetMemberPos(keyLen uint32) uint32 {
-	return typeSetSize + typeSetKeySize + keyLen
+func typeSetMemberPos(key []byte) uint32 {
+	return typeSetSize + typeSetKeySize + uint32(len(key))
 }
