@@ -33,7 +33,7 @@ func zaddCommandFunc(ctx Context) {
 	var key = ctx.args[1]
 	var zsetSize uint32 = 0
 
-	metaValue, err := typeZSetGetMeata(ctx, key)
+	metaValue, err := typeZSetGetMeta(ctx, key)
 	if err != nil && err.Error() != ErrKeyNotExist {
 		ctx.Conn.WriteError(err.Error())
 		return
@@ -74,7 +74,7 @@ func zscoreCommandFunc(ctx Context) {
 		return
 	}
 
-	_, err := typeZSetGetMeata(ctx, ctx.args[1])
+	_, err := typeZSetGetMeta(ctx, ctx.args[1])
 	if err != nil {
 		if err.Error() == ErrKeyNotExist {
 			ctx.Conn.WriteNull()
@@ -100,7 +100,7 @@ func zcardCommandFunc(ctx Context) {
 		return
 	}
 
-	metaValue, err := typeZSetGetMeata(ctx, ctx.args[1])
+	metaValue, err := typeZSetGetMeta(ctx, ctx.args[1])
 	if err != nil {
 		if err.Error() != ErrKeyNotExist {
 			ctx.Conn.WriteError(err.Error())
@@ -125,7 +125,7 @@ func zremCommandFunc(ctx Context) {
 	}
 
 	var key = ctx.args[1]
-	metaValue, err := typeZSetGetMeata(ctx, key)
+	metaValue, err := typeZSetGetMeta(ctx, key)
 	if err != nil && err.Error() != ErrKeyNotExist {
 		ctx.Conn.WriteError(err.Error())
 		return
@@ -220,7 +220,7 @@ func typeZSetMarshalScore(key, score, member []byte) []byte {
 	return scoreBuff.Bytes()
 }
 
-func typeZSetGetMeata(ctx Context, key []byte) ([]byte, error) {
+func typeZSetGetMeta(ctx Context, key []byte) ([]byte, error) {
 	metaValue, err := ctx.db.Get(key)
 	if err != nil && err.Error() == ErrKeyNotExist {
 		return nil, err
