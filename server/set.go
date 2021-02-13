@@ -144,10 +144,6 @@ func spopCommandFunc(ctx Context) {
 		setSize = binary.BigEndian.Uint32(metaValue[1:5])
 	}
 
-	var keyLen = uint32(len(key))
-	var keySize = make([]byte, typeSetKeySize)
-	binary.BigEndian.PutUint32(keySize, keyLen)
-
 	var cnt int64 = 1
 	if len(ctx.args) == 3 {
 		cnt, err = strconv.ParseInt(string(ctx.args[2]), 10, 64)
@@ -156,7 +152,7 @@ func spopCommandFunc(ctx Context) {
 			return
 		}
 	}
-	var memberPos = typeSetSize + typeSetKeySize + keyLen
+	var memberPos = typeSetSize + typeSetKeySize + uint32(len(key))
 	members := typeSetScan(ctx, key, cnt)
 	var lenToDel = len(members)
 	if lenToDel > 0 {
