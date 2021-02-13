@@ -29,8 +29,9 @@ const (
 )
 
 var (
-	typeSet     = []byte("S")
-	typeSetSize = uint32(len(typeSet))
+	typeSetMemberDefaultByte = []byte(typeSetMemberDefault)
+	typeSet                  = []byte("S")
+	typeSetSize              = uint32(len(typeSet))
 )
 
 func saddCommandFunc(ctx Context) {
@@ -56,7 +57,6 @@ func saddCommandFunc(ctx Context) {
 
 	binary.BigEndian.PutUint32(keySize, keyLen)
 	var cnt uint32 = 0
-	var memDefault = []byte(typeSetMemberDefault)
 	for _, member := range ctx.args[2:] {
 		memBuff := bytes.NewBuffer([]byte{})
 		memBuff.Write(typeSet)
@@ -69,7 +69,7 @@ func saddCommandFunc(ctx Context) {
 			continue
 		}
 
-		err = ctx.db.Set(memBuff.Bytes(), memDefault, 0)
+		err = ctx.db.Set(memBuff.Bytes(), typeSetMemberDefaultByte, 0)
 		if err == nil {
 			cnt++
 		}
@@ -417,7 +417,6 @@ func sunionstoreCommandFunc(ctx Context) {
 
 	binary.BigEndian.PutUint32(keySize, keyLen)
 	var cnt uint32 = 0
-	var memDefault = []byte(typeSetMemberDefault)
 	for _, member := range union {
 		memBuff := bytes.NewBuffer([]byte{})
 		memBuff.Write(typeSet)
@@ -425,7 +424,7 @@ func sunionstoreCommandFunc(ctx Context) {
 		memBuff.Write(dstkey)
 		memBuff.Write(member)
 
-		err := ctx.db.Set(memBuff.Bytes(), memDefault, 0)
+		err := ctx.db.Set(memBuff.Bytes(), typeSetMemberDefaultByte, 0)
 		if err == nil {
 			cnt++
 		}
@@ -516,7 +515,6 @@ func sdiffstoreCommandFunc(ctx Context) {
 
 	binary.BigEndian.PutUint32(keySize, keyLen)
 	var cnt uint32 = 0
-	var memDefault = []byte(typeSetMemberDefault)
 	for _, member := range diff {
 		memBuff := bytes.NewBuffer([]byte{})
 		memBuff.Write(typeSet)
@@ -524,7 +522,7 @@ func sdiffstoreCommandFunc(ctx Context) {
 		memBuff.Write(dstkey)
 		memBuff.WriteString(member)
 
-		err := ctx.db.Set(memBuff.Bytes(), memDefault, 0)
+		err := ctx.db.Set(memBuff.Bytes(), typeSetMemberDefaultByte, 0)
 		if err == nil {
 			cnt++
 		}
@@ -584,4 +582,8 @@ func typeSetScan(ctx Context, key []byte, cnt int64) [][]byte {
 	ctx.db.Scan(scanOpts)
 
 	return members
+}
+
+func typeSetMemberPos(keyLen uint32) uint32 {
+	return typeSetSize + typeSetKeySize + keyLen
 }
