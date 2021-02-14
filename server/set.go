@@ -41,7 +41,6 @@ func saddCommandFunc(ctx Context) {
 	}
 
 	var key = ctx.args[1]
-	var keyLen = uint32(len(key))
 	var keySize = make([]byte, typeSetKeySize)
 	var setSize uint32 = 0
 
@@ -55,7 +54,7 @@ func saddCommandFunc(ctx Context) {
 		}
 	}
 
-	binary.BigEndian.PutUint32(keySize, keyLen)
+	binary.BigEndian.PutUint32(keySize, uint32(len(key)))
 	var cnt uint32 = 0
 	for _, member := range ctx.args[2:] {
 		memBuff := bytes.NewBuffer([]byte{})
@@ -101,17 +100,14 @@ func sismemberCommandFunc(ctx Context) {
 		ctx.Conn.WriteInt(0)
 		return
 	}
-	var keyLen = uint32(len(key))
 	var keySize = make([]byte, typeSetKeySize)
-
-	binary.BigEndian.PutUint32(keySize, keyLen)
-	var member = ctx.args[2]
+	binary.BigEndian.PutUint32(keySize, uint32(len(key)))
 
 	memBuff := bytes.NewBuffer([]byte{})
 	memBuff.Write(typeSet)
 	memBuff.Write(keySize)
 	memBuff.Write(key)
-	memBuff.Write(member)
+	memBuff.Write(ctx.args[2])
 
 	v, err := ctx.db.Get(memBuff.Bytes())
 	if err == nil && string(v) == typeSetMemberDefault {
@@ -411,10 +407,8 @@ func sunionstoreCommandFunc(ctx Context) {
 		}
 	}
 
-	var keyLen = uint32(len(dstkey))
 	var keySize = make([]byte, typeSetKeySize)
-
-	binary.BigEndian.PutUint32(keySize, keyLen)
+	binary.BigEndian.PutUint32(keySize, uint32(len(dstkey)))
 	var cnt uint32 = 0
 	for _, member := range union {
 		memBuff := bytes.NewBuffer([]byte{})
