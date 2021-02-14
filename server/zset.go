@@ -6,13 +6,15 @@ import (
 	"errors"
 	"fmt"
 	"github.com/qichengzx/raptor/storage/badger"
+	"strconv"
 )
 
 const (
-	cmdZAdd   = "zadd"
-	cmdZScore = "zscore"
-	cmdZCard  = "zcard"
-	cmdZRem   = "zrem"
+	cmdZAdd    = "zadd"
+	cmdZScore  = "zscore"
+	cmdZIncrby = "zincrby"
+	cmdZCard   = "zcard"
+	cmdZRem    = "zrem"
 )
 
 const (
@@ -92,6 +94,47 @@ func zscoreCommandFunc(ctx Context) {
 	}
 
 	ctx.Conn.WriteBulk(score)
+}
+
+func zincrbyCommandFunc(ctx Context) {
+	if len(ctx.args) != 4 {
+		ctx.Conn.WriteError(fmt.Sprintf(ErrWrongArgs, ctx.cmd))
+		return
+	}
+
+	var key = ctx.args[1]
+	member := typeZSetMarshalMemeber(key, ctx.args[3])
+	score, err := ctx.db.Get(member)
+	scoreStr := string(score)
+	if err != nil {
+		scoreStr = "0"
+	}
+
+	scoreInt, err := strconv.ParseInt(scoreStr, 10, 64)
+	if err != nil {
+		ctx.Conn.WriteError(ErrValue)
+		return
+	}
+	incr, err := strconv.ParseInt(string(ctx.args[2]), 10, 64)
+	if err != nil {
+		ctx.Conn.WriteError(ErrValue)
+		return
+	}
+	scoreInt += incr
+	scoreStr = strconv.FormatInt(scoreInt, 10)
+
+	err = ctx.db.Set(member, score, 0)
+	if err != nil {
+		ctx.Conn.WriteError(ErrValue)
+		return
+	}
+	score = typeZSetMarshalScore(key, []byte(scoreStr), ctx.args[3])
+	err = ctx.db.Set(score, nil, 0)
+	if err != nil {
+		ctx.Conn.WriteError(ErrValue)
+		return
+	}
+	ctx.Conn.WriteBulk([]byte(scoreStr))
 }
 
 func zcardCommandFunc(ctx Context) {

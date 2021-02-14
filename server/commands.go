@@ -49,10 +49,11 @@ var (
 		cmdSDiffStore:  sdiffstoreCommandFunc,
 
 		//ZSET
-		cmdZAdd:   zaddCommandFunc,
-		cmdZScore: zscoreCommandFunc,
-		cmdZCard:  zcardCommandFunc,
-		cmdZRem:   zremCommandFunc,
+		cmdZAdd:    zaddCommandFunc,
+		cmdZScore:  zscoreCommandFunc,
+		cmdZIncrby: zincrbyCommandFunc,
+		cmdZCard:   zcardCommandFunc,
+		cmdZRem:    zremCommandFunc,
 
 		//HASH
 		cmdHSet:    hsetCommandFunc,
