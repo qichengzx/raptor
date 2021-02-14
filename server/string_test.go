@@ -25,8 +25,8 @@ func TestSet(t *testing.T) {
 	}
 
 	out := make([]byte, 1024)
-	if _, err := conn.Read(out); err == nil {
-		if bytes.Compare(out, []byte("+OK")) == 0 {
+	if n, err := conn.Read(out); err == nil {
+		if bytes.Compare(out[:n], []byte("+OK")) == 0 {
 			t.Error("response did match expected output")
 		}
 	} else {
@@ -34,15 +34,44 @@ func TestSet(t *testing.T) {
 	}
 }
 
-
 func TestGet(t *testing.T) {
 	if _, err := conn.Write([]byte("get xxx\n")); err != nil {
 		t.Error("could not write payload to TCP server:", err)
 	}
 
 	out := make([]byte, 1024)
-	if _, err := conn.Read(out); err == nil {
-		if bytes.Compare(out, []byte("aaa")) == 0 {
+	if n, err := conn.Read(out); err == nil {
+		if bytes.Compare(out[:n], []byte("aaa")) == 0 {
+			t.Error("response did match expected output")
+		}
+	} else {
+		t.Error("could not read from connection")
+	}
+}
+
+func TestSetNX(t *testing.T) {
+	if _, err := conn.Write([]byte("setnx xxx aaa\n")); err != nil {
+		t.Error("could not write payload to TCP server:", err)
+	}
+
+	out := make([]byte, 1024)
+	if n, err := conn.Read(out); err == nil {
+		if bytes.Compare(out[:n], []byte(":0")) == 0 {
+			t.Error("response did match expected output")
+		}
+	} else {
+		t.Error("could not read from connection")
+	}
+}
+
+func TestSetEX(t *testing.T) {
+	if _, err := conn.Write([]byte("setex xxx 10 aaa\n")); err != nil {
+		t.Error("could not write payload to TCP server:", err)
+	}
+
+	out := make([]byte, 1024)
+	if n, err := conn.Read(out); err == nil {
+		if bytes.Compare(out[:n], []byte("+OK")) == 0 {
 			t.Error("response did match expected output")
 		}
 	} else {
