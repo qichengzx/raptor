@@ -252,14 +252,14 @@ func incrCommandFunc(ctx Context) {
 		ctx.Conn.WriteError(err.Error())
 		return
 	}
-	if err != nil {
-		val = []byte("0")
-	}
 
-	valInt, err := strconv.ParseInt(string(val[1:]), 10, 64)
-	if err != nil {
-		ctx.Conn.WriteError(ErrValue)
-		return
+	var valInt int64 = 0
+	if val != nil {
+		valInt, err = strconv.ParseInt(string(val[1:]), 10, 64)
+		if err != nil {
+			ctx.Conn.WriteError(ErrValue)
+			return
+		}
 	}
 	valInt += 1
 	valStr := strconv.FormatInt(valInt, 10)
@@ -289,14 +289,13 @@ func incrByCommandFunc(ctx Context) {
 		ctx.Conn.WriteError(err.Error())
 		return
 	}
-	if err != nil {
-		val = []byte("0")
-	}
-
-	valInt, err := strconv.ParseInt(string(val[1:]), 10, 64)
-	if err != nil {
-		ctx.Conn.WriteError(ErrValue)
-		return
+	var valInt int64 = 0
+	if val != nil {
+		valInt, err = strconv.ParseInt(string(val[1:]), 10, 64)
+		if err != nil {
+			ctx.Conn.WriteError(ErrValue)
+			return
+		}
 	}
 	valInt += by
 	valStr := strconv.FormatInt(valInt, 10)
@@ -320,14 +319,14 @@ func decrCommandFunc(ctx Context) {
 		ctx.Conn.WriteError(err.Error())
 		return
 	}
-	if err != nil {
-		val = []byte("0")
-	}
 
-	valInt, err := strconv.ParseInt(string(val[1:]), 10, 64)
-	if err != nil {
-		ctx.Conn.WriteError(ErrValue)
-		return
+	var valInt int64 = 0
+	if val != nil {
+		valInt, err = strconv.ParseInt(string(val[1:]), 10, 64)
+		if err != nil {
+			ctx.Conn.WriteError(ErrValue)
+			return
+		}
 	}
 	valInt -= 1
 	valStr := strconv.FormatInt(valInt, 10)
@@ -357,13 +356,14 @@ func decrByCommandFunc(ctx Context) {
 		ctx.Conn.WriteError(err.Error())
 		return
 	}
-	if err != nil {
-		val = []byte("0")
-	}
 
-	valInt, err := strconv.ParseInt(string(val[1:]), 10, 64)
-	if err != nil {
-		ctx.Conn.WriteError(ErrValue)
+	var valInt int64 = 0
+	if val != nil {
+		valInt, err = strconv.ParseInt(string(val[1:]), 10, 64)
+		if err != nil {
+			ctx.Conn.WriteError(ErrValue)
+			return
+		}
 	}
 	valInt -= by
 	valStr := strconv.FormatInt(valInt, 10)
@@ -393,14 +393,14 @@ func incrByFloatCommandFunc(ctx Context) {
 		ctx.Conn.WriteError(err.Error())
 		return
 	}
-	if err != nil {
-		val = []byte("0")
-	}
 
-	valFloat, err := strconv.ParseFloat(string(val[1:]), 64)
-	if err != nil {
-		ctx.Conn.WriteError(ErrValue)
-		return
+	var valFloat float64 = 0
+	if val != nil {
+		valFloat, err = strconv.ParseFloat(string(val[1:]), 64)
+		if err != nil {
+			ctx.Conn.WriteError(ErrValue)
+			return
+		}
 	}
 	valFloat += by
 
