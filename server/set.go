@@ -119,7 +119,7 @@ func sismemberCommandFunc(ctx Context) {
 }
 
 func spopCommandFunc(ctx Context) {
-	if len(ctx.args) != 2 && len(ctx.args) != 3 {
+	if len(ctx.args) != 2 {
 		ctx.Conn.WriteError(fmt.Sprintf(ErrWrongArgs, ctx.cmd))
 		return
 	}
@@ -176,7 +176,7 @@ func spopCommandFunc(ctx Context) {
 }
 
 func srandmemberCommandFunc(ctx Context) {
-	if len(ctx.args) != 2 && len(ctx.args) != 3 {
+	if len(ctx.args) != 2 || len(ctx.args) != 3 {
 		ctx.Conn.WriteError(fmt.Sprintf(ErrWrongArgs, ctx.cmd))
 		return
 	}
