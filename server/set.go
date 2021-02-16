@@ -41,12 +41,10 @@ func saddCommandFunc(ctx Context) {
 	}
 
 	var key = ctx.args[1]
-	var keySize = make([]byte, typeSetKeySize)
 	var setSize uint32 = 0
-
 	metaValue, err := typeSetGetMeta(ctx, key)
 	if err == nil && metaValue != nil {
-		setSize = binary.BigEndian.Uint32(metaValue[1:5])
+		setSize = bytesToUint32(metaValue[1:5])
 	} else {
 		if err.Error() != ErrKeyNotExist {
 			ctx.Conn.WriteError(err.Error())
@@ -54,7 +52,7 @@ func saddCommandFunc(ctx Context) {
 		}
 	}
 
-	binary.BigEndian.PutUint32(keySize, uint32(len(key)))
+	var keySize = uint32ToBytes(typeSetKeySize, uint32(len(key)))
 	var cnt uint32 = 0
 	for _, member := range ctx.args[2:] {
 		memBuff := bytes.NewBuffer([]byte{})
@@ -100,9 +98,8 @@ func sismemberCommandFunc(ctx Context) {
 		ctx.Conn.WriteInt(0)
 		return
 	}
-	var keySize = make([]byte, typeSetKeySize)
-	binary.BigEndian.PutUint32(keySize, uint32(len(key)))
 
+	var keySize = uint32ToBytes(typeSetKeySize, uint32(len(key)))
 	memBuff := bytes.NewBuffer([]byte{})
 	memBuff.Write(typeSet)
 	memBuff.Write(keySize)
@@ -119,7 +116,7 @@ func sismemberCommandFunc(ctx Context) {
 }
 
 func spopCommandFunc(ctx Context) {
-	if len(ctx.args) != 2 {
+	if len(ctx.args) != 2 && len(ctx.args) != 3 {
 		ctx.Conn.WriteError(fmt.Sprintf(ErrWrongArgs, ctx.cmd))
 		return
 	}
@@ -137,7 +134,7 @@ func spopCommandFunc(ctx Context) {
 
 	var setSize uint32 = 0
 	if err == nil && metaValue != nil {
-		setSize = binary.BigEndian.Uint32(metaValue[1:5])
+		setSize = bytesToUint32(metaValue[1:5])
 	}
 
 	members := typeSetScan(ctx, key, 1)
@@ -168,7 +165,7 @@ func spopCommandFunc(ctx Context) {
 }
 
 func srandmemberCommandFunc(ctx Context) {
-	if len(ctx.args) != 2 || len(ctx.args) != 3 {
+	if len(ctx.args) != 2 && len(ctx.args) != 3 {
 		ctx.Conn.WriteError(fmt.Sprintf(ErrWrongArgs, ctx.cmd))
 		return
 	}
@@ -232,8 +229,7 @@ func sremCommandFunc(ctx Context) {
 		setSize = binary.BigEndian.Uint32(metaValue[1:5])
 	}
 
-	var keySize = make([]byte, typeSetKeySize)
-	binary.BigEndian.PutUint32(keySize, uint32(len(key)))
+	var keySize = uint32ToBytes(typeSetKeySize, uint32(len(key)))
 	var memberToDel [][]byte
 	for _, member := range ctx.args[2:] {
 		memBuff := bytes.NewBuffer([]byte{})
@@ -290,7 +286,7 @@ func scardCommandFunc(ctx Context) {
 
 	var setSize uint32 = 0
 	if metaValue != nil {
-		setSize = binary.BigEndian.Uint32(metaValue[1:5])
+		setSize = bytesToUint32(metaValue[1:5])
 	}
 
 	ctx.Conn.WriteInt(int(setSize))
@@ -399,8 +395,7 @@ func sunionstoreCommandFunc(ctx Context) {
 		}
 	}
 
-	var keySize = make([]byte, typeSetKeySize)
-	binary.BigEndian.PutUint32(keySize, uint32(len(dstkey)))
+	var keySize = uint32ToBytes(typeSetKeySize, uint32(len(dstkey)))
 	var cnt uint32 = 0
 	for _, member := range union {
 		memBuff := bytes.NewBuffer([]byte{})
@@ -495,8 +490,7 @@ func sdiffstoreCommandFunc(ctx Context) {
 		}
 	}
 
-	var keySize = make([]byte, typeSetKeySize)
-	binary.BigEndian.PutUint32(keySize, uint32(len(dstkey)))
+	var keySize = uint32ToBytes(typeSetKeySize, uint32(len(dstkey)))
 	var cnt uint32 = 0
 	for _, member := range diff {
 		memBuff := bytes.NewBuffer([]byte{})
@@ -535,10 +529,7 @@ func typeSetGetMeta(ctx Context, key []byte) ([]byte, error) {
 }
 
 func typeSetSaveMeta(ctx Context, key []byte, size uint32) error {
-	var metaValue = make([]byte, typeSetKeySize)
-	binary.BigEndian.PutUint32(metaValue, size)
-
-	return ctx.db.Set(key, append(typeSet, metaValue...), 0)
+	return ctx.db.Set(key, append(typeSet, uint32ToBytes(typeSetKeySize, size)...), 0)
 }
 
 func typeSetScan(ctx Context, key []byte, cnt int64) [][]byte {
@@ -546,10 +537,7 @@ func typeSetScan(ctx Context, key []byte, cnt int64) [][]byte {
 	var scanFunc = func(k, v []byte) {
 		members = append(members, k)
 	}
-
-	var keySize = make([]byte, typeSetKeySize)
-	var keyLen = uint32(len(key))
-	binary.BigEndian.PutUint32(keySize, keyLen)
+	var keySize = uint32ToBytes(typeSetKeySize, uint32(len(key)))
 
 	prefixBuff := bytes.NewBuffer([]byte{})
 	prefixBuff.Write(typeSet)
