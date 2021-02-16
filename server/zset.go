@@ -42,7 +42,7 @@ func zaddCommandFunc(ctx Context) {
 	}
 
 	if metaValue != nil {
-		zsetSize = binary.BigEndian.Uint32(metaValue[1:5])
+		zsetSize = bytesToUint32(metaValue[1:5])
 	}
 
 	var cnt uint32 = 0
@@ -155,7 +155,7 @@ func zcardCommandFunc(ctx Context) {
 
 	var zsetSize uint32 = 0
 	if metaValue != nil {
-		zsetSize = binary.BigEndian.Uint32(metaValue[1:5])
+		zsetSize = bytesToUint32(metaValue[1:5])
 	}
 
 	ctx.Conn.WriteInt(int(zsetSize))
@@ -176,7 +176,7 @@ func zremCommandFunc(ctx Context) {
 
 	var zsetSize uint32 = 0
 	if metaValue != nil {
-		zsetSize = binary.BigEndian.Uint32(metaValue[1:5])
+		zsetSize = bytesToUint32(metaValue[1:5])
 	}
 
 	var cnt uint32 = 0
@@ -279,8 +279,5 @@ func typeZSetGetMeta(ctx Context, key []byte) ([]byte, error) {
 }
 
 func typeZSetSetMeta(ctx Context, key []byte, size uint32) error {
-	var metaValue = make([]byte, typeZSetKeySize)
-	binary.BigEndian.PutUint32(metaValue, size)
-
-	return ctx.db.Set(key, append(typeZSet, metaValue...), 0)
+	return ctx.db.Set(key, append(typeZSet, uint32ToBytes(typeZSetKeySize, size)...), 0)
 }

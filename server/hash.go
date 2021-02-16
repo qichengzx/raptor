@@ -50,7 +50,7 @@ func hsetCommandFunc(ctx Context) {
 	}
 
 	if metaValue != nil {
-		hashSize = binary.BigEndian.Uint32(metaValue[1:5])
+		hashSize = bytesToUint32(metaValue[1:5])
 	}
 
 	field := typeHashMarshalField(key, ctx.args[2])
@@ -88,7 +88,7 @@ func hsetnxCommandFunc(ctx Context) {
 
 	var hashSize uint32 = 0
 	if metaValue != nil {
-		hashSize = binary.BigEndian.Uint32(metaValue[1:5])
+		hashSize = bytesToUint32(metaValue[1:5])
 	}
 
 	field := typeHashMarshalField(key, ctx.args[2])
@@ -207,7 +207,7 @@ func hdelCommandFunc(ctx Context) {
 
 	var hashSize uint32 = 0
 	if metaValue != nil {
-		hashSize = binary.BigEndian.Uint32(metaValue[1:5])
+		hashSize = bytesToUint32(metaValue[1:5])
 	}
 	var lenToDel = len(fieldToDel)
 	if lenToDel > 0 {
@@ -243,7 +243,7 @@ func hincrbyCommandFunc(ctx Context) {
 
 	metaValue, err := typeHashGetMeta(ctx, key)
 	if err == nil && metaValue != nil {
-		hashSize = binary.BigEndian.Uint32(metaValue[1:5])
+		hashSize = bytesToUint32(metaValue[1:5])
 	} else {
 		if err.Error() != ErrKeyNotExist {
 			ctx.Conn.WriteError(err.Error())
@@ -308,7 +308,7 @@ func hlenCommandFunc(ctx Context) {
 
 	var hashSize uint32 = 0
 	if metaValue != nil {
-		hashSize = binary.BigEndian.Uint32(metaValue[1:5])
+		hashSize = bytesToUint32(metaValue[1:5])
 	}
 
 	ctx.Conn.WriteInt(int(hashSize))
@@ -373,7 +373,7 @@ func hmsetCommandFunc(ctx Context) {
 	var hashSize uint32 = 0
 	metaValue, err := typeHashGetMeta(ctx, key)
 	if err == nil && metaValue != nil {
-		hashSize = binary.BigEndian.Uint32(metaValue[1:5])
+		hashSize = bytesToUint32(metaValue[1:5])
 	} else {
 		if err.Error() != ErrKeyNotExist {
 			ctx.Conn.WriteError(err.Error())
@@ -516,15 +516,11 @@ func typeHashGetMeta(ctx Context, key []byte) ([]byte, error) {
 }
 
 func typeHashSetMeta(ctx Context, key []byte, size uint32) error {
-	var metaValue = make([]byte, typeHashKeySize)
-	binary.BigEndian.PutUint32(metaValue, size)
-
-	return ctx.db.Set(key, append(typeHash, metaValue...), 0)
+	return ctx.db.Set(key, append(typeHash, uint32ToBytes(typeHashKeySize, size)...), 0)
 }
 
 func typeHashMarshalField(key, field []byte) []byte {
-	var keySize = make([]byte, typeHashKeySize)
-	binary.BigEndian.PutUint32(keySize, uint32(len(key)))
+	var keySize = uint32ToBytes(typeHashKeySize, uint32(len(key)))
 
 	fieldBuff := bytes.NewBuffer([]byte{})
 	fieldBuff.Write(typeHash)
@@ -545,10 +541,7 @@ func typeHashScan(ctx Context, key []byte, cnt int64) ([][]byte, [][]byte) {
 		values = append(values, v)
 	}
 
-	var keySize = make([]byte, typeHashKeySize)
-	var keyLen = uint32(len(key))
-	binary.BigEndian.PutUint32(keySize, keyLen)
-
+	var keySize = uint32ToBytes(typeHashKeySize, uint32(len(key)))
 	prefixBuff := bytes.NewBuffer([]byte{})
 	prefixBuff.Write(typeHash)
 	prefixBuff.Write(keySize)

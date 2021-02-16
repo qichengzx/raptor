@@ -2,7 +2,6 @@ package server
 
 import (
 	"bytes"
-	"encoding/binary"
 	"errors"
 	"fmt"
 	"github.com/qichengzx/raptor/storage/badger"
@@ -226,7 +225,7 @@ func sremCommandFunc(ctx Context) {
 
 	var setSize uint32 = 0
 	if err == nil && metaValue != nil {
-		setSize = binary.BigEndian.Uint32(metaValue[1:5])
+		setSize = bytesToUint32(metaValue[1:5])
 	}
 
 	var keySize = uint32ToBytes(typeSetKeySize, uint32(len(key)))
