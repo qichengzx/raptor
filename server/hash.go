@@ -2,7 +2,6 @@ package server
 
 import (
 	"bytes"
-	"encoding/binary"
 	"errors"
 	"fmt"
 	"github.com/qichengzx/raptor/storage/badger"
@@ -186,11 +185,8 @@ func hdelCommandFunc(ctx Context) {
 			return
 		}
 	}
-	var keyLen = uint32(len(key))
-	var keySize = make([]byte, typeHashKeySize)
 
-	binary.BigEndian.PutUint32(keySize, keyLen)
-
+	var keySize = uint32ToBytes(typeHashKeySize, uint32(len(key)))
 	var fieldToDel [][]byte
 	for _, field := range ctx.args[2:] {
 		fieldBuff := bytes.NewBuffer([]byte{})
@@ -354,7 +350,7 @@ func hgetallCommandFunc(ctx Context) {
 		return
 	}
 
-	var fieldPos = typeHashSize + typeHashKeySize + uint32(len(key))
+	var fieldPos = typeHashFieldPos(key)
 	fields, values := typeHashScan(ctx, key, 0)
 	ctx.Conn.WriteArray(len(fields) * 2)
 	for i := 0; i < len(fields); i++ {
@@ -381,10 +377,7 @@ func hmsetCommandFunc(ctx Context) {
 		}
 	}
 
-	var keyLen = uint32(len(key))
-	var keySize = make([]byte, typeHashKeySize)
-	binary.BigEndian.PutUint32(keySize, keyLen)
-
+	var keySize = uint32ToBytes(typeHashKeySize, uint32(len(key)))
 	var cnt uint32
 	for i := 0; i < len(ctx.args[2:]); i += 2 {
 		fieldBuff := bytes.NewBuffer([]byte{})
@@ -433,10 +426,7 @@ func hmgetCommandFunc(ctx Context) {
 			values = append(values, nil)
 		}
 	} else {
-		var keyLen = uint32(len(key))
-		var keySize = make([]byte, typeHashKeySize)
-		binary.BigEndian.PutUint32(keySize, keyLen)
-
+		var keySize = uint32ToBytes(typeHashKeySize, uint32(len(key)))
 		for _, field := range ctx.args[2:] {
 			fieldBuff := bytes.NewBuffer([]byte{})
 			fieldBuff.Write(typeHash)
@@ -472,7 +462,7 @@ func hkeysCommandFunc(ctx Context) {
 		return
 	}
 
-	var fieldPos = typeHashSize + typeHashKeySize + uint32(len(key))
+	var fieldPos = typeHashFieldPos(key)
 	fields, _ := typeHashScan(ctx, key, 0)
 	ctx.Conn.WriteArray(len(fields))
 	for i := 0; i < len(fields); i++ {
@@ -556,4 +546,8 @@ func typeHashScan(ctx Context, key []byte, cnt int64) ([][]byte, [][]byte) {
 	ctx.db.Scan(scanOpts)
 
 	return fields, values
+}
+
+func typeHashFieldPos(key []byte) uint32 {
+	return typeHashSize + typeHashKeySize + uint32(len(key))
 }
