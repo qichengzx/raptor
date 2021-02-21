@@ -44,12 +44,15 @@ func zaddCommandFunc(ctx Context) {
 		zsetSize = bytesToUint32(metaValue[1:5])
 	}
 
-	var cnt uint32 = 0
+	var (
+		cnt uint32 = 0
+		had uint32 = 0
+	)
 	for i := 2; i <= len(ctx.args[1:]); i += 2 {
 		member := typeZSetMarshalMemeber(key, ctx.args[i+1])
 		_, err := ctx.db.Get(member)
 		if err == nil {
-			continue
+			had ++
 		}
 		err = ctx.db.Set(member, ctx.args[i], 0)
 		if err == nil {
@@ -59,6 +62,7 @@ func zaddCommandFunc(ctx Context) {
 		err = ctx.db.Set(score, nil, 0)
 	}
 
+	cnt -= had
 	zsetSize += cnt
 	err = typeZSetSetMeta(ctx, key, zsetSize)
 	if err != nil {
