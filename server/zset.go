@@ -2,7 +2,6 @@ package server
 
 import (
 	"bytes"
-	"encoding/binary"
 	"errors"
 	"fmt"
 	"github.com/qichengzx/raptor/storage/badger"
@@ -216,10 +215,7 @@ func typeZSetScan(ctx Context, key []byte, cnt int64) ([][]byte, [][]byte) {
 		score = append(score, v)
 	}
 
-	var keySize = make([]byte, typeZSetKeySize)
-	var keyLen = uint32(len(key))
-	binary.BigEndian.PutUint32(keySize, keyLen)
-
+	var keySize = uint32ToBytes(typeZSetKeySize, uint32(len(key)))
 	prefixBuff := bytes.NewBuffer([]byte{})
 	prefixBuff.Write(typeZSet)
 	prefixBuff.Write(keySize)
@@ -237,9 +233,7 @@ func typeZSetScan(ctx Context, key []byte, cnt int64) ([][]byte, [][]byte) {
 }
 
 func typeZSetMarshalMemeber(key, member []byte) []byte {
-	var keySize = make([]byte, typeZSetKeySize)
-	binary.BigEndian.PutUint32(keySize, uint32(len(key)))
-
+	var keySize = uint32ToBytes(typeZSetKeySize, uint32(len(key)))
 	memberBuff := bytes.NewBuffer([]byte{})
 	memberBuff.Write(typeZSet)
 	memberBuff.Write(keySize)
@@ -250,9 +244,7 @@ func typeZSetMarshalMemeber(key, member []byte) []byte {
 }
 
 func typeZSetMarshalScore(key, score, member []byte) []byte {
-	var keySize = make([]byte, typeZSetKeySize)
-	binary.BigEndian.PutUint32(keySize, uint32(len(key)))
-
+	var keySize = uint32ToBytes(typeZSetKeySize, uint32(len(key)))
 	scoreBuff := bytes.NewBuffer([]byte{})
 	scoreBuff.Write(typeZSet)
 	scoreBuff.Write(keySize)
