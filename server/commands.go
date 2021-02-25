@@ -53,6 +53,7 @@ var (
 		cmdZScore:  zscoreCommandFunc,
 		cmdZIncrby: zincrbyCommandFunc,
 		cmdZCard:   zcardCommandFunc,
+		cmdZCount:  zcountCommandFunc,
 		cmdZRem:    zremCommandFunc,
 
 		//HASH

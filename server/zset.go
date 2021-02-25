@@ -13,6 +13,7 @@ const (
 	cmdZScore  = "zscore"
 	cmdZIncrby = "zincrby"
 	cmdZCard   = "zcard"
+	cmdZCount  = "zcount"
 	cmdZRem    = "zrem"
 )
 
@@ -52,7 +53,7 @@ func zaddCommandFunc(ctx Context) {
 		member := typeZSetMarshalMemeber(key, ctx.args[i+1])
 		_, err := ctx.db.Get(member)
 		if err == nil {
-			had ++
+			had++
 		}
 		err = ctx.db.Set(member, ctx.args[i], 0)
 		if err == nil {
@@ -162,6 +163,34 @@ func zcardCommandFunc(ctx Context) {
 	}
 
 	ctx.Conn.WriteInt(int(zsetSize))
+}
+
+func zcountCommandFunc(ctx Context) {
+	if len(ctx.args) != 4 {
+		ctx.Conn.WriteError(fmt.Sprintf(ErrWrongArgs, ctx.cmd))
+		return
+	}
+
+	var key = ctx.args[1]
+	_, err := typeZSetGetMeta(ctx, key)
+	if err != nil && err.Error() != ErrKeyNotExist {
+		ctx.Conn.WriteError(err.Error())
+		return
+	}
+
+	var cnt = 0
+	member, score := typeZSetScan(ctx, ctx.args[1], 0)
+	if len(member) > 0 {
+		for _, c := range score {
+			if c == nil {
+				continue
+			}
+			if bytes.Compare(c, ctx.args[3]) != 1 && bytes.Compare(c, ctx.args[2]) != -1 {
+				cnt++
+			}
+		}
+	}
+	ctx.Conn.WriteInt(cnt)
 }
 
 func zremCommandFunc(ctx Context) {
