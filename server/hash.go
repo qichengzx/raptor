@@ -53,13 +53,13 @@ func hsetCommandFunc(ctx Context) {
 	}
 
 	field := typeHashMarshalField(key, ctx.args[2])
-	exists, err := ctx.db.Get(field)
 	err = ctx.db.Set(field, ctx.args[3], 0)
 	if err != nil {
 		ctx.Conn.WriteInt(0)
 		return
 	}
 
+	exists, err := ctx.db.Get(field)
 	if metaValue == nil && exists == nil {
 		hashSize += 1
 		err = typeHashSetMeta(ctx, key, hashSize)
