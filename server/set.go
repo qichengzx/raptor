@@ -51,21 +51,15 @@ func saddCommandFunc(ctx Context) {
 		}
 	}
 
-	var keySize = uint32ToBytes(typeSetKeySize, uint32(len(key)))
 	var cnt uint32 = 0
 	for _, member := range ctx.args[2:] {
-		memBuff := bytes.NewBuffer([]byte{})
-		memBuff.Write(typeSet)
-		memBuff.Write(keySize)
-		memBuff.Write(key)
-		memBuff.Write(member)
-
-		_, err := ctx.db.Get(memBuff.Bytes())
+		memberByte := typeSetMarshalMemeber(key, member)
+		_, err := ctx.db.Get(memberByte)
 		if err == nil {
 			continue
 		}
 
-		err = ctx.db.Set(memBuff.Bytes(), typeSetMemberDefaultByte, 0)
+		err = ctx.db.Set(memberByte, typeSetMemberDefaultByte, 0)
 		if err == nil {
 			cnt++
 		}
@@ -98,14 +92,8 @@ func sismemberCommandFunc(ctx Context) {
 		return
 	}
 
-	var keySize = uint32ToBytes(typeSetKeySize, uint32(len(key)))
-	memBuff := bytes.NewBuffer([]byte{})
-	memBuff.Write(typeSet)
-	memBuff.Write(keySize)
-	memBuff.Write(key)
-	memBuff.Write(ctx.args[2])
-
-	v, err := ctx.db.Get(memBuff.Bytes())
+	memberByte := typeSetMarshalMemeber(key, ctx.args[2])
+	v, err := ctx.db.Get(memberByte)
 	if err == nil && string(v) == typeSetMemberDefault {
 		ctx.Conn.WriteInt(1)
 		return
@@ -552,6 +540,17 @@ func typeSetScan(ctx Context, key []byte, cnt int64) [][]byte {
 	ctx.db.Scan(scanOpts)
 
 	return members
+}
+
+func typeSetMarshalMemeber(key, member []byte) []byte {
+	var keySize = uint32ToBytes(typeSetKeySize, uint32(len(key)))
+	memBuff := bytes.NewBuffer([]byte{})
+	memBuff.Write(typeSet)
+	memBuff.Write(keySize)
+	memBuff.Write(key)
+	memBuff.Write(member)
+
+	return memBuff.Bytes()
 }
 
 func typeSetMemberPos(key []byte) uint32 {
