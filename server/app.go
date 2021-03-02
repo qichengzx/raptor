@@ -14,6 +14,14 @@ type App struct {
 	db     *raptor.Raptor
 	authed bool
 
+	infoServer struct {
+		os              string
+		archBits        int
+		processID       int
+		tcpPort         int
+		uptimeInSeconds int
+		uptimeInDays    int
+	}
 	infoClients struct {
 		connections int
 	}
@@ -29,14 +37,10 @@ func New(conf *config.Config) *App {
 		log.Fatal(err)
 	}
 
-	authed := false
-	if conf.Raptor.Auth == "" {
-		authed = true
-	}
 	return &App{
 		conf:   conf,
 		db:     db,
-		authed: authed,
+		authed: conf.Raptor.Auth == "",
 	}
 }
 
@@ -64,7 +68,7 @@ func (app *App) onCommand() func(conn redcon.Conn, cmd redcon.Command) {
 			conn.Close()
 		case "auth":
 			if len(cmd.Args) != 2 {
-				conn.WriteError("ERR wrong number of arguments for '" + string(cmd.Args[0]) + "' command")
+				conn.WriteError(fmt.Sprintf(ErrWrongArgs, todo))
 				return
 			}
 
