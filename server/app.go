@@ -6,6 +6,8 @@ import (
 	"github.com/qichengzx/raptor/raptor"
 	"github.com/tidwall/redcon"
 	"log"
+	"os"
+	"runtime"
 	"strings"
 )
 
@@ -16,11 +18,11 @@ type App struct {
 
 	infoServer struct {
 		os              string
-		archBits        int
+		//archBits        int
 		processID       int
 		tcpPort         int
-		uptimeInSeconds int
-		uptimeInDays    int
+		//uptimeInSeconds int
+		//uptimeInDays    int
 	}
 	infoClients struct {
 		connections int
@@ -41,6 +43,11 @@ func New(conf *config.Config) *App {
 		conf:   conf,
 		db:     db,
 		authed: conf.Raptor.Auth == "",
+		infoServer: struct {
+			os              string
+			processID       int
+			tcpPort         int
+		}{os: runtime.GOOS, processID: os.Getpid(), tcpPort: conf.Raptor.Port},
 	}
 }
 
