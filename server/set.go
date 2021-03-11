@@ -51,7 +51,11 @@ func saddCommandFunc(ctx Context) {
 		}
 	}
 
-	var cnt uint32 = 0
+	var (
+		cnt    uint32 = 0
+		keys   [][]byte
+		values [][]byte
+	)
 	for _, member := range ctx.args[2:] {
 		memberByte := typeSetMarshalMemeber(key, member)
 		_, err := ctx.db.Get(memberByte)
@@ -59,14 +63,16 @@ func saddCommandFunc(ctx Context) {
 			continue
 		}
 
-		err = ctx.db.Set(memberByte, typeSetMemberDefaultByte, 0)
-		if err == nil {
-			cnt++
-		}
+		keys = append(keys, memberByte)
+		values = append(values, typeSetMemberDefaultByte)
+		cnt++
 	}
 	setSize += cnt
 
-	err = typeSetSaveMeta(ctx, key, setSize)
+	keys = append(keys, key)
+	values = append(values, typeSetMetaVal(setSize))
+
+	err = ctx.db.MSet(keys, values)
 	if err != nil {
 		ctx.Conn.WriteInt(0)
 		return
@@ -516,7 +522,11 @@ func typeSetGetMeta(ctx Context, key []byte) ([]byte, error) {
 }
 
 func typeSetSaveMeta(ctx Context, key []byte, size uint32) error {
-	return ctx.db.Set(key, append(typeSet, uint32ToBytes(typeSetKeySize, size)...), 0)
+	return ctx.db.Set(key, typeSetMetaVal(size), 0)
+}
+
+func typeSetMetaVal(size uint32) []byte {
+	return append(typeSet, uint32ToBytes(typeSetKeySize, size)...)
 }
 
 func typeSetScan(ctx Context, key []byte, cnt int64) [][]byte {
