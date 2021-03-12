@@ -483,16 +483,10 @@ func sdiffstoreCommandFunc(ctx Context) {
 		}
 	}
 
-	var keySize = uint32ToBytes(typeSetKeySize, uint32(len(dstkey)))
 	var cnt uint32 = 0
 	for _, member := range diff {
-		memBuff := bytes.NewBuffer([]byte{})
-		memBuff.Write(typeSet)
-		memBuff.Write(keySize)
-		memBuff.Write(dstkey)
-		memBuff.WriteString(member)
-
-		err := ctx.db.Set(memBuff.Bytes(), typeSetMemberDefaultByte, 0)
+		memberByte := typeSetMarshalMemeber(dstkey, []byte(member))
+		err := ctx.db.Set(memberByte, typeSetMemberDefaultByte, 0)
 		if err == nil {
 			cnt++
 		}
