@@ -388,16 +388,10 @@ func sunionstoreCommandFunc(ctx Context) {
 		}
 	}
 
-	var keySize = uint32ToBytes(typeSetKeySize, uint32(len(dstkey)))
 	var cnt uint32 = 0
 	for _, member := range union {
-		memBuff := bytes.NewBuffer([]byte{})
-		memBuff.Write(typeSet)
-		memBuff.Write(keySize)
-		memBuff.Write(dstkey)
-		memBuff.Write(member)
-
-		err := ctx.db.Set(memBuff.Bytes(), typeSetMemberDefaultByte, 0)
+		memberByte := typeSetMarshalMemeber(dstkey, member)
+		err := ctx.db.Set(memberByte, typeSetMemberDefaultByte, 0)
 		if err == nil {
 			cnt++
 		}
