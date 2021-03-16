@@ -186,18 +186,12 @@ func hdelCommandFunc(ctx Context) {
 		}
 	}
 
-	var keySize = uint32ToBytes(typeHashKeySize, uint32(len(key)))
 	var fieldToDel [][]byte
-	for _, field := range ctx.args[2:] {
-		fieldBuff := bytes.NewBuffer([]byte{})
-		fieldBuff.Write(typeHash)
-		fieldBuff.Write(keySize)
-		fieldBuff.Write(key)
-		fieldBuff.Write(field)
-
-		_, err = ctx.db.Get(fieldBuff.Bytes())
+	for _, f := range ctx.args[2:] {
+		field := typeHashMarshalField(key, f)
+		_, err = ctx.db.Get(field)
 		if err == nil {
-			fieldToDel = append(fieldToDel, fieldBuff.Bytes())
+			fieldToDel = append(fieldToDel, field)
 		}
 	}
 
@@ -377,21 +371,15 @@ func hmsetCommandFunc(ctx Context) {
 		}
 	}
 
-	var keySize = uint32ToBytes(typeHashKeySize, uint32(len(key)))
 	var cnt uint32
 	for i := 0; i < len(ctx.args[2:]); i += 2 {
-		fieldBuff := bytes.NewBuffer([]byte{})
-		fieldBuff.Write(typeHash)
-		fieldBuff.Write(keySize)
-		fieldBuff.Write(key)
-		fieldBuff.Write(ctx.args[2:][i])
-
-		_, err := ctx.db.Get(fieldBuff.Bytes())
+		field := typeHashMarshalField(key, ctx.args[2:][i])
+		_, err := ctx.db.Get(field)
 		if err == nil {
 			continue
 		}
 
-		err = ctx.db.Set(fieldBuff.Bytes(), ctx.args[2:][i+1], 0)
+		err = ctx.db.Set(field, ctx.args[2:][i+1], 0)
 		if err == nil {
 			cnt++
 		}
@@ -426,15 +414,9 @@ func hmgetCommandFunc(ctx Context) {
 			values = append(values, nil)
 		}
 	} else {
-		var keySize = uint32ToBytes(typeHashKeySize, uint32(len(key)))
-		for _, field := range ctx.args[2:] {
-			fieldBuff := bytes.NewBuffer([]byte{})
-			fieldBuff.Write(typeHash)
-			fieldBuff.Write(keySize)
-			fieldBuff.Write(key)
-			fieldBuff.Write(field)
-
-			v, _ := ctx.db.Get(fieldBuff.Bytes())
+		for _, f := range ctx.args[2:] {
+			field := typeHashMarshalField(key, f)
+			v, _ := ctx.db.Get(field)
 			values = append(values, v)
 		}
 	}
