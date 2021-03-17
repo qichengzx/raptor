@@ -30,7 +30,7 @@ const (
 
 var (
 	typeHash     = []byte("H")
-	typeHashSize = uint32(len(typeSet))
+	typeHashSize = uint32(len(typeHash))
 )
 
 func hsetCommandFunc(ctx Context) {
@@ -39,8 +39,12 @@ func hsetCommandFunc(ctx Context) {
 		return
 	}
 
-	var key = ctx.args[1]
-	var hashSize uint32 = 0
+	var (
+		key = ctx.args[1]
+		hashSize uint32 = 0
+		keys [][]byte
+		values [][]byte
+	)
 
 	metaValue, err := typeHashGetMeta(ctx, key)
 	if err != nil && err.Error() != ErrKeyNotExist {
@@ -57,13 +61,9 @@ func hsetCommandFunc(ctx Context) {
 	if exists == nil {
 		hashSize += 1
 	}
-	err = ctx.db.Set(field, ctx.args[3], 0)
-	if err != nil {
-		ctx.Conn.WriteInt(0)
-		return
-	}
-
-	err = typeHashSetMeta(ctx, key, hashSize)
+	keys = append(keys, key, field)
+	values = append(values, typeHashMetaVal(hashSize), ctx.args[3])
+	err = ctx.db.MSet(keys, values)
 	if err != nil {
 		ctx.Conn.WriteInt(0)
 		return
@@ -359,8 +359,10 @@ func hmsetCommandFunc(ctx Context) {
 		return
 	}
 
-	var key = ctx.args[1]
-	var hashSize uint32 = 0
+	var (
+		key = ctx.args[1]
+		hashSize uint32 = 0
+	)
 	metaValue, err := typeHashGetMeta(ctx, key)
 	if err == nil && metaValue != nil {
 		hashSize = bytesToUint32(metaValue[1:5])
@@ -488,7 +490,11 @@ func typeHashGetMeta(ctx Context, key []byte) ([]byte, error) {
 }
 
 func typeHashSetMeta(ctx Context, key []byte, size uint32) error {
-	return ctx.db.Set(key, append(typeHash, uint32ToBytes(typeHashKeySize, size)...), 0)
+	return ctx.db.Set(key, typeHashMetaVal(size), 0)
+}
+
+func typeHashMetaVal(size uint32) []byte {
+	return append(typeHash, uint32ToBytes(typeHashKeySize, size)...)
 }
 
 func typeHashMarshalField(key, field []byte) []byte {
