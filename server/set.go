@@ -318,9 +318,10 @@ func sunionCommandFunc(ctx Context) {
 		return
 	}
 
-	var union [][]byte
-	var check = map[string]bool{}
-
+	var (
+		union [][]byte
+		check = map[string]struct{}{}
+	)
 	for _, key := range ctx.args[1:] {
 		_, err := typeSetGetMeta(ctx, key)
 		if err != nil {
@@ -334,7 +335,7 @@ func sunionCommandFunc(ctx Context) {
 		members := typeSetScan(ctx, key, 0)
 		for _, member := range members {
 			if _, ok := check[string(member[memberPos:])]; !ok {
-				check[string(member[memberPos:])] = true
+				check[string(member[memberPos:])] = struct{}{}
 				union = append(union, member[memberPos:])
 			}
 		}
