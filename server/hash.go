@@ -228,8 +228,10 @@ func hincrbyCommandFunc(ctx Context) {
 		return
 	}
 
-	var key = ctx.args[1]
-	var hashSize uint32 = 0
+	var (
+		key = ctx.args[1]
+		hashSize uint32 = 0
+	)
 
 	metaValue, err := typeHashGetMeta(ctx, key)
 	if err == nil && metaValue != nil {
@@ -513,11 +515,11 @@ func typeHashScan(ctx Context, key []byte, cnt int64) ([][]byte, [][]byte) {
 	var (
 		fields [][]byte
 		values [][]byte
+		scanFunc = func(k, v []byte) {
+			fields = append(fields, k)
+			values = append(values, v)
+		}
 	)
-	var scanFunc = func(k, v []byte) {
-		fields = append(fields, k)
-		values = append(values, v)
-	}
 
 	var keySize = uint32ToBytes(typeHashKeySize, uint32(len(key)))
 	prefixBuff := bytes.NewBuffer([]byte{})
