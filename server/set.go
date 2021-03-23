@@ -39,8 +39,10 @@ func saddCommandFunc(ctx Context) {
 		return
 	}
 
-	var key = ctx.args[1]
-	var setSize uint32 = 0
+	var (
+		key = ctx.args[1]
+		setSize uint32 = 0
+	)
 	metaValue, err := typeSetGetMeta(ctx, key)
 	if err == nil && metaValue != nil {
 		setSize = bytesToUint32(metaValue[1:5])
@@ -222,18 +224,12 @@ func sremCommandFunc(ctx Context) {
 		setSize = bytesToUint32(metaValue[1:5])
 	}
 
-	var keySize = uint32ToBytes(typeSetKeySize, uint32(len(key)))
 	var memberToDel [][]byte
 	for _, member := range ctx.args[2:] {
-		memBuff := bytes.NewBuffer([]byte{})
-		memBuff.Write(typeSet)
-		memBuff.Write(keySize)
-		memBuff.Write(key)
-		memBuff.Write(member)
-
-		v, err := ctx.db.Get(memBuff.Bytes())
+		memberByte := typeSetMarshalMemeber(key, member)
+		v, err := ctx.db.Get(memberByte)
 		if err == nil && string(v) == typeSetMemberDefault {
-			memberToDel = append(memberToDel, memBuff.Bytes())
+			memberToDel = append(memberToDel, memberByte)
 			continue
 		}
 	}
