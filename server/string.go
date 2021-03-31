@@ -419,9 +419,10 @@ func msetCommandFunc(ctx Context) {
 		return
 	}
 
-	var keys, values [][]byte
-	var length = len(ctx.args[1:])
-
+	var (
+		keys, values [][]byte
+		length = len(ctx.args[1:])
+	)
 	for i := 0; i < length; i += 2 {
 		keys = append(keys, ctx.args[1:][i])
 		values = append(values, append(typeString, ctx.args[1:][i+1]...))
@@ -442,9 +443,10 @@ func msetnxCommandFunc(ctx Context) {
 		return
 	}
 
-	var keys, values [][]byte
-	var length = len(ctx.args[1:])
-
+	var (
+		keys, values [][]byte
+		length = len(ctx.args[1:])
+	)
 	for i := 0; i < length; i += 2 {
 		keys = append(keys, ctx.args[1:][i])
 		values = append(values, append(typeString, ctx.args[1:][i+1]...))
