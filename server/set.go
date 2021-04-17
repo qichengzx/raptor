@@ -132,7 +132,16 @@ func spopCommandFunc(ctx Context) {
 		setSize = bytesToUint32(metaValue[1:5])
 	}
 
-	members := typeSetScan(ctx, key, 1)
+	var cnt int64 = 1
+	if len(ctx.args) == 3 {
+		cnt, err = strconv.ParseInt(string(ctx.args[2]), 10, 64)
+		if err != nil {
+			ctx.Conn.WriteError(ErrValue)
+			return
+		}
+	}
+
+	members := typeSetScan(ctx, key, cnt)
 	var lenToDel = len(members)
 	if lenToDel > 0 {
 		memberToDel := members
