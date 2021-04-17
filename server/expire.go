@@ -3,6 +3,7 @@ package server
 import (
 	"fmt"
 	"strconv"
+	"time"
 )
 
 const (
@@ -63,7 +64,8 @@ func expireatCommandFunc(ctx Context) {
 		ctx.Conn.WriteInt(RespErr)
 		return
 	}
-	err = ctx.db.ExpireAt(ctx.args[1], timestamp)
+	ttl := timestamp - time.Now().Unix()
+	err = ctx.db.Expire(ctx.args[1], int(ttl))
 	if err != nil {
 		ctx.Conn.WriteInt(RespErr)
 	} else {
