@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"strconv"
+	"strings"
 )
 
 const (
@@ -29,12 +30,100 @@ const (
 var typeString = []byte("s")
 
 func setCommandFunc(ctx Context) {
-	if len(ctx.args) != 3 {
+	if len(ctx.args) < 3 || len(ctx.args) > 6 {
 		ctx.Conn.WriteError(fmt.Sprintf(ErrWrongArgs, ctx.cmd))
 		return
 	}
 
-	err := ctx.db.Set(ctx.args[1], append(typeString, ctx.args[2]...), 0)
+	var (
+		ttl = 0
+		err error
+	)
+	if len(ctx.args) >= 3 {
+		var(
+			ttlFlag = false
+			xxFlag = false
+			nxFlag = false
+			i = 2
+		)
+
+		for i < len(ctx.args) {
+			commandItem := strings.ToLower(string(ctx.args[i]))
+			if commandItem == "nx" {
+				nxFlag = true
+			} else if commandItem == "xx" {
+				xxFlag = true
+			} else if commandItem == "ex" {
+				if ttlFlag == true {
+					ctx.Conn.WriteError(ErrSyntax)
+					return
+				}
+
+				i++
+				if i < len(ctx.args) {
+					ttl, err = strconv.Atoi(string(ctx.args[4]))
+					if err != nil {
+						ctx.Conn.WriteError(ErrExpireTime)
+						return
+					}
+					ttlFlag = true
+				} else {
+					ctx.Conn.WriteError(ErrSyntax)
+					return
+				}
+			} else if commandItem == "px" {
+				if ttlFlag == true {
+					ctx.Conn.WriteError(ErrSyntax)
+					return
+				}
+				i++
+				if i < len(ctx.args) {
+					ttl, err = strconv.Atoi(string(ctx.args[4]))
+					if err != nil {
+						ctx.Conn.WriteError(ErrExpireTime)
+						return
+					}
+					ttl = ttl / 1000
+					ttlFlag = true
+				} else {
+					ctx.Conn.WriteError(ErrSyntax)
+					return
+				}
+			}
+			i++
+		}
+
+		if nxFlag == true && xxFlag == true {
+			ctx.Conn.WriteError(ErrSyntax)
+			return
+		}
+
+		if nxFlag {
+			val, err := typeStringGetVal(ctx, ctx.args[1])
+			if err != nil && err.Error() != ErrKeyNotExist {
+				ctx.Conn.WriteError(err.Error())
+				return
+			}
+			if val != nil {
+				ctx.Conn.WriteNull()
+				return
+			}
+
+		}
+		if xxFlag {
+			val, err := typeStringGetVal(ctx, ctx.args[1])
+			if err != nil && err.Error() != ErrKeyNotExist {
+				ctx.Conn.WriteError(err.Error())
+				return
+			}
+			if val == nil {
+				ctx.Conn.WriteNull()
+				return
+			}
+		}
+	}
+
+	err = ctx.db.Set(ctx.args[1], append(typeString, ctx.args[2]...), ttl)
 	if err != nil {
 		ctx.Conn.WriteNull()
 	} else {
