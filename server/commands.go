@@ -43,6 +43,7 @@ var (
 		cmdSRem:        sremCommandFunc,
 		cmdSCard:       scardCommandFunc,
 		cmdSMembers:    smembersCommandFunc,
+		cmdSScan:       sscanCommandFunc,
 		cmdSUnion:      sunionCommandFunc,
 		cmdSUnionStore: sunionstoreCommandFunc,
 		cmdSDiff:       sdiffCommandFunc,

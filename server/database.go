@@ -139,7 +139,7 @@ func scan(ctx Context, key []byte) [][]byte {
 		keys = append(keys, fields...)
 
 	case storage.ObjectSet:
-		members := typeSetScan(ctx, key, 0)
+		members := typeSetScan(ctx, key, nil, 0)
 		keys = append(keys, members...)
 
 	case storage.ObjectZset:

@@ -16,6 +16,7 @@ const (
 	cmdSRem        = "srem"
 	cmdSCard       = "scard"
 	cmdSMembers    = "smembers"
+	cmdSScan       = "sscan"
 	cmdSUnion      = "sunion"
 	cmdSUnionStore = "sunionstore"
 	cmdSDiff       = "sdiff"
@@ -40,7 +41,7 @@ func saddCommandFunc(ctx Context) {
 	}
 
 	var (
-		key = ctx.args[1]
+		key            = ctx.args[1]
 		setSize uint32 = 0
 	)
 	metaValue, err := typeSetGetMeta(ctx, key)
@@ -54,9 +55,9 @@ func saddCommandFunc(ctx Context) {
 	}
 
 	var (
-		cnt    uint32 = 0
-		keys   [][]byte
-		values [][]byte
+		cnt     uint32 = 0
+		keys    [][]byte
+		values  [][]byte
 		keySize = uint32ToBytes(typeSetKeySize, uint32(len(key)))
 	)
 	for _, member := range ctx.args[2:] {
@@ -142,7 +143,7 @@ func spopCommandFunc(ctx Context) {
 		}
 	}
 
-	members := typeSetScan(ctx, key, cnt)
+	members := typeSetScan(ctx, key, nil, cnt)
 	var lenToDel = len(members)
 	if lenToDel > 0 {
 		memberToDel := members
@@ -196,7 +197,7 @@ func srandmemberCommandFunc(ctx Context) {
 	}
 
 	var memberPos = typeSetMemberPos(key)
-	members := typeSetScan(ctx, key, cnt)
+	members := typeSetScan(ctx, key, nil, cnt)
 	if cnt == 1 {
 		if len(members) == 1 {
 			ctx.Conn.WriteBulk(members[0][memberPos:])
@@ -312,7 +313,49 @@ func smembersCommandFunc(ctx Context) {
 	}
 
 	var memberPos = typeSetMemberPos(key)
-	members := typeSetScan(ctx, key, 0)
+	members := typeSetScan(ctx, key, nil, 0)
+	ctx.Conn.WriteArray(len(members))
+	for _, member := range members {
+		ctx.Conn.WriteBulk(member[memberPos:])
+	}
+}
+
+// TODO sscanCommandFunc does not fully implement the sscan command for now
+func sscanCommandFunc(ctx Context) {
+	if len(ctx.args) < 3 {
+		ctx.Conn.WriteError(fmt.Sprintf(ErrWrongArgs, ctx.cmd))
+		return
+	}
+
+	var key = ctx.args[1]
+	meta, err := typeSetGetMeta(ctx, ctx.args[1])
+	if err != nil {
+		if err.Error() != ErrKeyNotExist && err.Error() != ErrWrongType {
+			ctx.Conn.WriteError(err.Error())
+			return
+		}
+	}
+	if meta == nil {
+		ctx.Conn.WriteError(ErrEmpty)
+		return
+	}
+
+	var (
+		memberPos = typeSetMemberPos(key)
+		match     []byte
+		cnt       int64
+	)
+	if ctx.args[2] != nil {
+		match = ctx.args[2]
+	}
+	if ctx.args[3] != nil {
+		cnt, err = strconv.ParseInt(string(ctx.args[3]), 10, 64)
+		if err != nil {
+			ctx.Conn.WriteError(ErrValue)
+			return
+		}
+	}
+	members := typeSetScan(ctx, key, match, cnt)
 	ctx.Conn.WriteArray(len(members))
 	for _, member := range members {
 		ctx.Conn.WriteBulk(member[memberPos:])
@@ -339,7 +382,7 @@ func sunionCommandFunc(ctx Context) {
 		}
 
 		var memberPos = typeSetMemberPos(key)
-		members := typeSetScan(ctx, key, 0)
+		members := typeSetScan(ctx, key, nil, 0)
 		for _, member := range members {
 			if _, ok := check[string(member[memberPos:])]; !ok {
 				check[string(member[memberPos:])] = struct{}{}
@@ -370,7 +413,7 @@ func sunionstoreCommandFunc(ctx Context) {
 
 	for _, key := range ctx.args[2:] {
 		var memberPos = typeSetMemberPos(key)
-		members := typeSetScan(ctx, key, 0)
+		members := typeSetScan(ctx, key, nil, 0)
 		for _, member := range members {
 			if _, ok := check[string(member[memberPos:])]; !ok {
 				check[string(member[memberPos:])] = struct{}{}
@@ -423,7 +466,7 @@ func sdiffCommandFunc(ctx Context) {
 	var check = make(map[string]int)
 	for _, key := range ctx.args[1:] {
 		var memberPos = typeSetMemberPos(key)
-		members := typeSetScan(ctx, key, 0)
+		members := typeSetScan(ctx, key, nil, 0)
 		for _, member := range members {
 			check[string(member[memberPos:])]++
 		}
@@ -456,7 +499,7 @@ func sdiffstoreCommandFunc(ctx Context) {
 	var check = make(map[string]int)
 	for _, key := range ctx.args[2:] {
 		var memberPos = typeSetMemberPos(key)
-		members := typeSetScan(ctx, key, 0)
+		members := typeSetScan(ctx, key, nil, 0)
 		for _, member := range members {
 			check[string(member[memberPos:])]++
 		}
@@ -527,9 +570,10 @@ func typeSetMetaVal(size uint32) []byte {
 	return append(typeSet, uint32ToBytes(typeSetKeySize, size)...)
 }
 
-func typeSetScan(ctx Context, key []byte, cnt int64) [][]byte {
+func typeSetScan(ctx Context, key, prefix []byte, cnt int64) [][]byte {
 	var members [][]byte
 	var scanFunc = func(k, v []byte) {
+		fmt.Println(string(k), string(v))
 		members = append(members, k)
 	}
 	var keySize = uint32ToBytes(typeSetKeySize, uint32(len(key)))
@@ -538,6 +582,9 @@ func typeSetScan(ctx Context, key []byte, cnt int64) [][]byte {
 	prefixBuff.Write(typeSet)
 	prefixBuff.Write(keySize)
 	prefixBuff.Write(key)
+	if prefix != nil {
+		prefixBuff.Write(prefix)
+	}
 
 	scanOpts := badger.ScannerOptions{
 		Prefix:      prefixBuff.Bytes(),
