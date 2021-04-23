@@ -57,9 +57,10 @@ func saddCommandFunc(ctx Context) {
 		cnt    uint32 = 0
 		keys   [][]byte
 		values [][]byte
+		keySize = uint32ToBytes(typeSetKeySize, uint32(len(key)))
 	)
 	for _, member := range ctx.args[2:] {
-		memberByte := typeSetMarshalMemeber(key, member)
+		memberByte := typeSetMarshalMemeber(key, member, keySize)
 		_, err := ctx.db.Get(memberByte)
 		if err == nil {
 			continue
@@ -99,8 +100,8 @@ func sismemberCommandFunc(ctx Context) {
 		ctx.Conn.WriteInt(0)
 		return
 	}
-
-	memberByte := typeSetMarshalMemeber(key, ctx.args[2])
+	var keySize = uint32ToBytes(typeSetKeySize, uint32(len(key)))
+	memberByte := typeSetMarshalMemeber(key, ctx.args[2], keySize)
 	v, err := ctx.db.Get(memberByte)
 	if err == nil && string(v) == typeSetMemberDefault {
 		ctx.Conn.WriteInt(1)
@@ -234,8 +235,9 @@ func sremCommandFunc(ctx Context) {
 	}
 
 	var memberToDel [][]byte
+	var keySize = uint32ToBytes(typeSetKeySize, uint32(len(key)))
 	for _, member := range ctx.args[2:] {
-		memberByte := typeSetMarshalMemeber(key, member)
+		memberByte := typeSetMarshalMemeber(key, member, keySize)
 		v, err := ctx.db.Get(memberByte)
 		if err == nil && string(v) == typeSetMemberDefault {
 			memberToDel = append(memberToDel, memberByte)
@@ -395,8 +397,9 @@ func sunionstoreCommandFunc(ctx Context) {
 	}
 
 	var cnt uint32 = 0
+	var keySize = uint32ToBytes(typeSetKeySize, uint32(len(dstkey)))
 	for _, member := range union {
-		memberByte := typeSetMarshalMemeber(dstkey, member)
+		memberByte := typeSetMarshalMemeber(dstkey, member, keySize)
 		err := ctx.db.Set(memberByte, typeSetMemberDefaultByte, 0)
 		if err == nil {
 			cnt++
@@ -484,8 +487,9 @@ func sdiffstoreCommandFunc(ctx Context) {
 	}
 
 	var cnt uint32 = 0
+	var keySize = uint32ToBytes(typeSetKeySize, uint32(len(dstkey)))
 	for _, member := range diff {
-		memberByte := typeSetMarshalMemeber(dstkey, []byte(member))
+		memberByte := typeSetMarshalMemeber(dstkey, []byte(member), keySize)
 		err := ctx.db.Set(memberByte, typeSetMemberDefaultByte, 0)
 		if err == nil {
 			cnt++
@@ -546,8 +550,7 @@ func typeSetScan(ctx Context, key []byte, cnt int64) [][]byte {
 	return members
 }
 
-func typeSetMarshalMemeber(key, member []byte) []byte {
-	var keySize = uint32ToBytes(typeSetKeySize, uint32(len(key)))
+func typeSetMarshalMemeber(key, member, keySize []byte) []byte {
 	memBuff := bytes.NewBuffer([]byte{})
 	memBuff.Write(typeSet)
 	memBuff.Write(keySize)
