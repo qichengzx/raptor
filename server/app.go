@@ -9,6 +9,7 @@ import (
 	"os"
 	"runtime"
 	"strings"
+	"time"
 )
 
 type App struct {
@@ -16,14 +17,7 @@ type App struct {
 	db     *raptor.Raptor
 	authed bool
 
-	infoServer struct {
-		os              string
-		//archBits        int
-		processID       int
-		tcpPort         int
-		//uptimeInSeconds int
-		//uptimeInDays    int
-	}
+	infoServer infoServer
 	infoClients struct {
 		connections int
 	}
@@ -31,6 +25,16 @@ type App struct {
 		totalConnectionsReceived int
 		totalCommandsProcessed   int
 	}
+}
+
+type infoServer struct {
+	os              string
+	//archBits        int
+	processID       int
+	tcpPort         int
+	uptimeInSeconds int
+	uptime			time.Time
+	uptimeInDays    int
 }
 
 func New(conf *config.Config) *App {
@@ -43,11 +47,14 @@ func New(conf *config.Config) *App {
 		conf:   conf,
 		db:     db,
 		authed: conf.Raptor.Auth == "",
-		infoServer: struct {
-			os              string
-			processID       int
-			tcpPort         int
-		}{os: runtime.GOOS, processID: os.Getpid(), tcpPort: conf.Raptor.Port},
+		infoServer: infoServer{
+			os: runtime.GOOS,
+			processID: os.Getpid(),
+			tcpPort: conf.Raptor.Port,
+			uptimeInSeconds: 0,
+			uptime: time.Now(),
+			uptimeInDays: 0,
+		},
 	}
 }
 
