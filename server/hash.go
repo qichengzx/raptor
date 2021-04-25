@@ -40,10 +40,10 @@ func hsetCommandFunc(ctx Context) {
 	}
 
 	var (
-		key = ctx.args[1]
+		key             = ctx.args[1]
 		hashSize uint32 = 0
-		keys [][]byte
-		values [][]byte
+		keys     [][]byte
+		values   [][]byte
 	)
 
 	metaValue, err := typeHashGetMeta(ctx, key)
@@ -229,7 +229,7 @@ func hincrbyCommandFunc(ctx Context) {
 	}
 
 	var (
-		key = ctx.args[1]
+		key             = ctx.args[1]
 		hashSize uint32 = 0
 	)
 
@@ -362,7 +362,7 @@ func hmsetCommandFunc(ctx Context) {
 	}
 
 	var (
-		key = ctx.args[1]
+		key             = ctx.args[1]
 		hashSize uint32 = 0
 	)
 	metaValue, err := typeHashGetMeta(ctx, key)
@@ -513,8 +513,8 @@ func typeHashMarshalField(key, field []byte) []byte {
 
 func typeHashScan(ctx Context, key []byte, cnt int64) ([][]byte, [][]byte) {
 	var (
-		fields [][]byte
-		values [][]byte
+		fields   [][]byte
+		values   [][]byte
 		scanFunc = func(k, v []byte) {
 			fields = append(fields, k)
 			values = append(values, v)

@@ -40,11 +40,11 @@ func setCommandFunc(ctx Context) {
 		err error
 	)
 	if len(ctx.args) >= 3 {
-		var(
+		var (
 			ttlFlag = false
-			xxFlag = false
-			nxFlag = false
-			i = 2
+			xxFlag  = false
+			nxFlag  = false
+			i       = 2
 		)
 
 		for i < len(ctx.args) {
@@ -510,7 +510,7 @@ func msetCommandFunc(ctx Context) {
 
 	var (
 		keys, values [][]byte
-		length = len(ctx.args[1:])
+		length       = len(ctx.args[1:])
 	)
 	for i := 0; i < length; i += 2 {
 		keys = append(keys, ctx.args[1:][i])
@@ -534,7 +534,7 @@ func msetnxCommandFunc(ctx Context) {
 
 	var (
 		keys, values [][]byte
-		length = len(ctx.args[1:])
+		length       = len(ctx.args[1:])
 	)
 	for i := 0; i < length; i += 2 {
 		keys = append(keys, ctx.args[1:][i])
