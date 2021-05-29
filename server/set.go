@@ -573,7 +573,6 @@ func typeSetMetaVal(size uint32) []byte {
 func typeSetScan(ctx Context, key, prefix []byte, cnt int64) [][]byte {
 	var members [][]byte
 	var scanFunc = func(k, v []byte) {
-		fmt.Println(string(k), string(v))
 		members = append(members, k)
 	}
 	var keySize = uint32ToBytes(typeSetKeySize, uint32(len(key)))

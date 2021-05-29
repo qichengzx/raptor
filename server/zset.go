@@ -32,9 +32,10 @@ func zaddCommandFunc(ctx Context) {
 		return
 	}
 
-	var key = ctx.args[1]
-	var zsetSize uint32 = 0
-
+	var (
+		key = ctx.args[1]
+		zsetSize uint32 = 0
+	)
 	metaValue, err := typeZSetGetMeta(ctx, key)
 	if err != nil && err.Error() != ErrKeyNotExist {
 		ctx.Conn.WriteError(err.Error())
