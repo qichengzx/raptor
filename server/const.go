@@ -11,6 +11,7 @@ const (
 	ErrKeyNotExist = "Key not found"
 
 	ErrNoAuth     = "NOAUTH Authentication required"
+	ErrCmd        = "ERR unknown command '%s'"
 	ErrWrongArgs  = "ERR wrong number of arguments for '%s' command"
 	ErrWrongArgsN = "wrong number of arguments (given %d, expected %d)"
 	ErrPassword   = "ERR invalid password"

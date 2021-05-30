@@ -17,7 +17,7 @@ type App struct {
 	db     *raptor.Raptor
 	authed bool
 
-	infoServer infoServer
+	infoServer  infoServer
 	infoClients struct {
 		connections int
 	}
@@ -28,12 +28,12 @@ type App struct {
 }
 
 type infoServer struct {
-	os              string
+	os string
 	//archBits        int
 	processID       int
 	tcpPort         int
 	uptimeInSeconds int
-	uptime			time.Time
+	uptime          time.Time
 	uptimeInDays    int
 }
 
@@ -48,12 +48,12 @@ func New(conf *config.Config) *App {
 		db:     db,
 		authed: conf.Raptor.Auth == "",
 		infoServer: infoServer{
-			os: runtime.GOOS,
-			processID: os.Getpid(),
-			tcpPort: conf.Raptor.Port,
+			os:              runtime.GOOS,
+			processID:       os.Getpid(),
+			tcpPort:         conf.Raptor.Port,
 			uptimeInSeconds: 0,
-			uptime: time.Now(),
-			uptimeInDays: 0,
+			uptime:          time.Now(),
+			uptimeInDays:    0,
 		},
 	}
 }
@@ -101,7 +101,7 @@ func (app *App) onCommand() func(conn redcon.Conn, cmd redcon.Command) {
 			}
 			f, ok := commands[todo]
 			if !ok {
-				conn.WriteError("ERR unknown command '" + string(cmd.Args[0]) + "'")
+				conn.WriteError(fmt.Sprintf(ErrCmd, string(cmd.Args[0])))
 				return
 			}
 
