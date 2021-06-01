@@ -130,7 +130,7 @@ func spopCommandFunc(ctx Context) {
 	}
 
 	var setSize uint32 = 0
-	if err == nil && metaValue != nil {
+	if metaValue != nil {
 		setSize = bytesToUint32(metaValue[1:5])
 	}
 
@@ -312,8 +312,10 @@ func smembersCommandFunc(ctx Context) {
 		return
 	}
 
-	var memberPos = typeSetMemberPos(key)
-	members := typeSetScan(ctx, key, nil, 0)
+	var (
+		memberPos = typeSetMemberPos(key)
+		members = typeSetScan(ctx, key, nil, 0)
+	)
 	ctx.Conn.WriteArray(len(members))
 	for _, member := range members {
 		ctx.Conn.WriteBulk(member[memberPos:])
@@ -606,6 +608,7 @@ func typeSetMarshalMemeber(key, member, keySize []byte) []byte {
 	return memBuff.Bytes()
 }
 
+//typeSetMemberPos return real member position
 func typeSetMemberPos(key []byte) uint32 {
 	return typeSetSize + typeSetKeySize + uint32(len(key))
 }
