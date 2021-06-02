@@ -33,7 +33,7 @@ func zaddCommandFunc(ctx Context) {
 	}
 
 	var (
-		key = ctx.args[1]
+		key             = ctx.args[1]
 		zsetSize uint32 = 0
 	)
 	metaValue, err := typeZSetGetMeta(ctx, key)

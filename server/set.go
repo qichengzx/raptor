@@ -163,7 +163,7 @@ func spopCommandFunc(ctx Context) {
 		}
 	}
 
-	ctx.Conn.WriteArray(len(members))
+	ctx.Conn.WriteArray(lenToDel)
 	var memberPos = typeSetMemberPos(key)
 	for _, member := range members {
 		ctx.Conn.WriteBulk(member[memberPos:])
