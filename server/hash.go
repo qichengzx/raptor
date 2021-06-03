@@ -249,19 +249,7 @@ func hincrbyCommandFunc(ctx Context) {
 		val = []byte("0")
 	}
 
-	valInt, err := strconv.ParseInt(string(val), 10, 64)
-	if err != nil {
-		ctx.Conn.WriteError(ErrHashValue)
-		return
-	}
-
-	by, err := strconv.ParseInt(string(ctx.args[3]), 10, 64)
-	if err != nil {
-		ctx.Conn.WriteError(ErrValue)
-		return
-	}
-
-	valInt += by
+	valInt, _ := incrInt64ToByte(val, ctx.args[3])
 	valStr := strconv.FormatInt(valInt, 10)
 	err = ctx.db.Set(field, []byte(valStr), 0)
 	if err != nil {
