@@ -228,20 +228,13 @@ func hincrbyCommandFunc(ctx Context) {
 		return
 	}
 
-	var (
-		key             = ctx.args[1]
-		hashSize uint32 = 0
-	)
-
+	var key             = ctx.args[1]
 	metaValue, err := typeHashGetMeta(ctx, key)
-	if err == nil && metaValue != nil {
-		hashSize = bytesToUint32(metaValue[1:5])
-	} else {
-		if err.Error() != ErrKeyNotExist {
-			ctx.Conn.WriteError(err.Error())
-			return
-		}
+	if err != nil && err.Error() != ErrKeyNotExist {
+		ctx.Conn.WriteError(err.Error())
+		return
 	}
+	var hashSize = bytesToUint32(metaValue[1:5])
 
 	field := typeHashMarshalField(key, ctx.args[2])
 	val, err := ctx.db.Get(field)
