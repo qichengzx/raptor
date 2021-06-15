@@ -347,15 +347,14 @@ func hmsetCommandFunc(ctx Context) {
 		hashSize uint32 = 0
 	)
 	metaValue, err := typeHashGetMeta(ctx, key)
-	if err == nil && metaValue != nil {
-		hashSize = bytesToUint32(metaValue[1:5])
-	} else {
-		if err.Error() != ErrKeyNotExist {
-			ctx.Conn.WriteError(err.Error())
-			return
-		}
+	if err != nil && err.Error() != ErrKeyNotExist {
+		ctx.Conn.WriteError(err.Error())
+		return
 	}
 
+	if metaValue != nil {
+		hashSize = bytesToUint32(metaValue[1:5])
+	}
 	var cnt uint32
 	for i := 0; i < len(ctx.args[2:]); i += 2 {
 		field := typeHashMarshalField(key, ctx.args[2:][i])
