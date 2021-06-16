@@ -231,7 +231,7 @@ func sremCommandFunc(ctx Context) {
 	}
 
 	var setSize uint32 = 0
-	if err == nil && metaValue != nil {
+	if metaValue != nil {
 		setSize = bytesToUint32(metaValue[1:5])
 	}
 
