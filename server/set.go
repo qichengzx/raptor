@@ -45,14 +45,11 @@ func saddCommandFunc(ctx Context) {
 		setSize uint32 = 0
 	)
 	metaValue, err := typeSetGetMeta(ctx, key)
-	if err == nil && metaValue != nil {
-		setSize = bytesToUint32(metaValue[1:5])
-	} else {
-		if err.Error() != ErrKeyNotExist {
-			ctx.Conn.WriteError(err.Error())
-			return
-		}
+	if err != nil && err.Error() != ErrKeyNotExist {
+		ctx.Conn.WriteError(err.Error())
+		return
 	}
+	setSize = bytesToUint32(metaValue[1:5])
 
 	var (
 		cnt     uint32 = 0
