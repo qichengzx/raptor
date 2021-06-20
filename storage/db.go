@@ -28,7 +28,7 @@ type DB interface {
 
 type ObjectType []byte
 
-var (
+const (
 	ObjectString = "s"
 	ObjectList   = "L"
 	ObjectHash   = "H"
