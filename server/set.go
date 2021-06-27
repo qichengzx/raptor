@@ -49,7 +49,9 @@ func saddCommandFunc(ctx Context) {
 		ctx.Conn.WriteError(err.Error())
 		return
 	}
-	setSize = bytesToUint32(metaValue[1:5])
+	if metaValue != nil {
+		setSize = bytesToUint32(metaValue[1:5])
+	}
 
 	var (
 		cnt     uint32 = 0
