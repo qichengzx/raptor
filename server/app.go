@@ -9,6 +9,7 @@ import (
 	"os"
 	"runtime"
 	"strings"
+	"sync/atomic"
 	"time"
 )
 
@@ -19,11 +20,11 @@ type App struct {
 
 	infoServer  infoServer
 	infoClients struct {
-		connections int
+		connections int32
 	}
 	infoStat struct {
-		totalConnectionsReceived int
-		totalCommandsProcessed   int
+		totalConnectionsReceived int32
+		totalCommandsProcessed   int32
 	}
 }
 
@@ -94,7 +95,7 @@ func (app *App) onCommand() func(conn redcon.Conn, cmd redcon.Command) {
 		case "info":
 
 		default:
-			app.infoStat.totalCommandsProcessed++
+			atomic.AddInt32(&app.infoStat.totalCommandsProcessed, 1)
 			if !app.authed {
 				conn.WriteError(ErrNoAuth)
 				return
@@ -119,8 +120,8 @@ func (app *App) onCommand() func(conn redcon.Conn, cmd redcon.Command) {
 func (app *App) onAccept() func(conn redcon.Conn) bool {
 	return func(conn redcon.Conn) bool {
 		log.Printf("accept: %s", conn.RemoteAddr())
-		app.infoClients.connections++
-		app.infoStat.totalConnectionsReceived++
+		atomic.AddInt32(&app.infoClients.connections, 1)
+		atomic.AddInt32(&app.infoStat.totalConnectionsReceived, 1)
 		return true
 	}
 }
@@ -128,7 +129,7 @@ func (app *App) onAccept() func(conn redcon.Conn) bool {
 func (app *App) onClose() func(conn redcon.Conn, err error) {
 	return func(conn redcon.Conn, err error) {
 		log.Printf("closed: %s, err: %v", conn.RemoteAddr(), err)
-		app.infoClients.connections--
+		atomic.AddInt32(&app.infoClients.connections, -1)
 	}
 }
 
