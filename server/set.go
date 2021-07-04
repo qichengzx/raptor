@@ -24,7 +24,7 @@ const (
 )
 
 const (
-	typeSetMemberDefault = "1"
+	typeSetMemberDefault = ""
 	typeSetKeySize       = 4
 )
 
