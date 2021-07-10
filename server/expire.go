@@ -28,9 +28,9 @@ func expireCommandFunc(ctx Context) {
 	err = ctx.db.Expire(ctx.args[1], seconds)
 	if err != nil {
 		ctx.Conn.WriteInt(0)
-	} else {
-		ctx.Conn.WriteInt(1)
+		return
 	}
+	ctx.Conn.WriteInt(1)
 }
 
 func pexpireCommandFunc(ctx Context) {
@@ -48,9 +48,9 @@ func pexpireCommandFunc(ctx Context) {
 	err = ctx.db.Expire(ctx.args[1], millisecond/1000)
 	if err != nil {
 		ctx.Conn.WriteInt(0)
-	} else {
-		ctx.Conn.WriteInt(1)
+		return
 	}
+	ctx.Conn.WriteInt(1)
 }
 
 func expireatCommandFunc(ctx Context) {
@@ -68,9 +68,9 @@ func expireatCommandFunc(ctx Context) {
 	err = ctx.db.Expire(ctx.args[1], int(ttl))
 	if err != nil {
 		ctx.Conn.WriteInt(RespErr)
-	} else {
-		ctx.Conn.WriteInt(RespSucc)
+		return
 	}
+	ctx.Conn.WriteInt(RespSucc)
 }
 
 func ttlCommandFunc(ctx Context) {
@@ -92,7 +92,7 @@ func persistCommandFunc(ctx Context) {
 	err := ctx.db.Persist(ctx.args[1])
 	if err == nil {
 		ctx.Conn.WriteInt(RespSucc)
-	} else {
-		ctx.Conn.WriteInt(RespErr)
+		return
 	}
+	ctx.Conn.WriteInt(RespErr)
 }
