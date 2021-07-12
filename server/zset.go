@@ -51,7 +51,7 @@ func zaddCommandFunc(ctx Context) {
 		had uint32 = 0
 	)
 	for i := 2; i <= len(ctx.args[1:]); i += 2 {
-		member := typeZSetMarshalMemeber(key, ctx.args[i+1])
+		member := typeZSetMarshalMember(key, ctx.args[i+1])
 		_, err := ctx.db.Get(member)
 		if err == nil {
 			had++
@@ -91,7 +91,7 @@ func zscoreCommandFunc(ctx Context) {
 		return
 	}
 
-	member := typeZSetMarshalMemeber(ctx.args[1], ctx.args[2])
+	member := typeZSetMarshalMember(ctx.args[1], ctx.args[2])
 	score, err := ctx.db.Get(member)
 	if err != nil {
 		ctx.Conn.WriteNull()
@@ -108,7 +108,7 @@ func zincrbyCommandFunc(ctx Context) {
 	}
 
 	var key = ctx.args[1]
-	member := typeZSetMarshalMemeber(key, ctx.args[3])
+	member := typeZSetMarshalMember(key, ctx.args[3])
 	score, err := ctx.db.Get(member)
 	scoreStr := string(score)
 	if err != nil {
@@ -215,7 +215,7 @@ func zremCommandFunc(ctx Context) {
 	var cnt uint32 = 0
 	var keysToDel [][]byte
 	for i := 2; i <= len(ctx.args[1:]); i++ {
-		member := typeZSetMarshalMemeber(key, ctx.args[i])
+		member := typeZSetMarshalMember(key, ctx.args[i])
 		score, err := ctx.db.Get(member)
 		if err != nil {
 			continue
@@ -266,7 +266,7 @@ func typeZSetScan(ctx Context, key []byte, cnt int64) ([][]byte, [][]byte) {
 	return members, score
 }
 
-func typeZSetMarshalMemeber(key, member []byte) []byte {
+func typeZSetMarshalMember(key, member []byte) []byte {
 	var keySize = uint32ToBytes(typeZSetKeySize, uint32(len(key)))
 	memberBuff := bytes.NewBuffer([]byte{})
 	memberBuff.Write(typeZSet)
