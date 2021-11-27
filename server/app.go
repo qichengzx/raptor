@@ -16,7 +16,7 @@ import (
 type App struct {
 	conf   *config.Config
 	db     *raptor.Raptor
-	authed bool
+	authed map[string]struct{}
 
 	infoServer  infoServer
 	infoClients struct {
@@ -47,7 +47,7 @@ func New(conf *config.Config) *App {
 	return &App{
 		conf:   conf,
 		db:     db,
-		authed: conf.Raptor.Auth == "",
+		authed: make(map[string]struct{}),
 		infoServer: infoServer{
 			os:              runtime.GOOS,
 			processID:       os.Getpid(),
@@ -87,7 +87,7 @@ func (app *App) onCommand() func(conn redcon.Conn, cmd redcon.Command) {
 				return
 			}
 
-			if app.auth(string(cmd.Args[1])) {
+			if app.auth(conn, string(cmd.Args[1])) {
 				conn.WriteString(RespOK)
 			} else {
 				conn.WriteError(ErrPassword)
@@ -96,7 +96,7 @@ func (app *App) onCommand() func(conn redcon.Conn, cmd redcon.Command) {
 
 		default:
 			atomic.AddInt32(&app.infoStat.totalCommandsProcessed, 1)
-			if !app.authed {
+			if !app.authCheck(conn) {
 				conn.WriteError(ErrNoAuth)
 				return
 			}
@@ -137,16 +137,20 @@ func (app *App) GetDB() *raptor.Raptor {
 	return app.db
 }
 
-func (app *App) authCheck() bool {
-	return app.authed
+func (app *App) authCheck(conn redcon.Conn) bool {
+	if _, ok := app.authed[conn.RemoteAddr()]; ok {
+		return true
+	}
+	return false
 }
 
-func (app *App) auth(auth string) bool {
+func (app *App) auth(conn redcon.Conn, auth string) bool {
 	if auth == app.conf.Raptor.Auth {
-		app.authed = true
+		app.authed[conn.RemoteAddr()] = struct{}{}
+		return true
 	}
 
-	return app.authed
+	return false
 }
 
 func (app *App) Close() error {
