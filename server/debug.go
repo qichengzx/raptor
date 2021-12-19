@@ -15,6 +15,7 @@ func echoCommandFunc(ctx Context) {
 
 	ctx.Conn.WriteString(string(ctx.args[1]))
 }
+
 func pingCommandFunc(ctx Context) {
 	ctx.Conn.WriteString(RespPong)
 }

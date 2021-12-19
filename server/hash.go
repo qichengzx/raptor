@@ -189,10 +189,7 @@ func hdelCommandFunc(ctx Context) {
 	var fieldToDel [][]byte
 	for _, f := range ctx.args[2:] {
 		field := typeHashMarshalField(key, f)
-		_, err = ctx.db.Get(field)
-		if err == nil {
-			fieldToDel = append(fieldToDel, field)
-		}
+		fieldToDel = append(fieldToDel, field)
 	}
 
 	var hashSize uint32 = 0
