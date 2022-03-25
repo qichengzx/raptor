@@ -9,6 +9,7 @@ import (
 	"os"
 	"runtime"
 	"strings"
+	"sync"
 	"sync/atomic"
 	"time"
 )
@@ -16,6 +17,7 @@ import (
 type App struct {
 	conf   *config.Config
 	db     *raptor.Raptor
+	mu *sync.Mutex
 	authed map[string]struct{}
 
 	infoServer  infoServer
@@ -47,6 +49,7 @@ func New(conf *config.Config) *App {
 	return &App{
 		conf:   conf,
 		db:     db,
+		mu: &sync.Mutex{},
 		authed: make(map[string]struct{}),
 		infoServer: infoServer{
 			os:              runtime.GOOS,
@@ -146,7 +149,9 @@ func (app *App) authCheck(conn redcon.Conn) bool {
 
 func (app *App) auth(conn redcon.Conn, auth string) bool {
 	if auth == app.conf.Raptor.Auth {
+		app.mu.Lock()
 		app.authed[conn.RemoteAddr()] = struct{}{}
+		app.mu.Unlock()
 		return true
 	}
 
