@@ -2,9 +2,10 @@ package badger
 
 import (
 	"errors"
-	"github.com/dgraph-io/badger"
-	"github.com/qichengzx/raptor/config"
 	"time"
+
+	"github.com/dgraph-io/badger/v4"
+	"github.com/qichengzx/raptor/config"
 )
 
 type BadgerDB struct {
